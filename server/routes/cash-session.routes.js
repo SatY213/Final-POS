@@ -1,0 +1,14 @@
+const express = require("express");
+const CashSessionController = require("../controllers/cash-session.controller");
+const authMiddleware = require("../middleware/auth.middleware");
+const router = express.Router();
+router.use(authMiddleware);
+router.get("/available-registers", CashSessionController.getAvailableRegisters);
+router.get("/current", CashSessionController.getCurrentSession);
+router.get("/", CashSessionController.listSessions);
+router.post("/open", CashSessionController.openSession);
+router.post("/:id/close", CashSessionController.closeSession);
+router.get("/:id/movements", CashSessionController.listMovements);
+router.post("/:id/movements", CashSessionController.createMovement);
+router.get("/:id", CashSessionController.getSessionById);
+module.exports = router;

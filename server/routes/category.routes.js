@@ -1,0 +1,10 @@
+const express = require("express");
+const Controller = require("../controllers/category.controller");
+const authMiddleware = require("../middleware/auth.middleware");
+const router = express.Router();
+router.use(authMiddleware);
+router.get("/", Controller.list);
+router.post("/", Controller.create);
+router.put("/:id", Controller.update);
+router.patch("/:id/status", Controller.setStatus);
+module.exports = router;
