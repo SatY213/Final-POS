@@ -19,19 +19,41 @@ import {
   receiveStock,
   transferStock,
 } from "../../api/inventory.model";
+import SearchableSelect from "../../components/ui/SearchableSelect";
 import { useLanguage } from "../../i18n/LanguageContext";
+import useDebouncedValue from "../../hooks/useDebouncedValue";
+import Td from "../../components/ui/Td";
+import Th from "../../components/ui/Th";
+import ErrorMessage from "../../components/ui/ErrorMessage";
+import { getRuntimeSettings } from "../../utils/runtimeSettings";
+import ExportButton from "../../components/data-exchange/ExportButton";
 
-const emptyFilters = { search: "", status: "all", page: 1, limit: 25 };
-export default function Stock({ warehouseId, warehouses, warehouseError }) {
+const emptyFilters = () => ({ search: "", status: "all", page: 1, limit: Number(getRuntimeSettings().default_page_size || 25) });
+function stockFiltersFromNavigation(initialFilters) {
+  const filters = emptyFilters();
+  if (!initialFilters) return filters;
+  filters.search = initialFilters.search || "";
+  filters.status = {
+    low_stock: "low",
+    out_of_stock: "out",
+    expiration: "expiring",
+  }[initialFilters.stock_status] || initialFilters.stock_status || "all";
+  return filters;
+}
+export default function Stock({ warehouseId, warehouses, warehouseError, initialFilters = null }) {
   const { t, language } = useLanguage();
   const [mode, setMode] = useState("list"),
-    [filters, setFilters] = useState(emptyFilters),
+    [filters, setFilters] = useState(() => stockFiltersFromNavigation(initialFilters)),
     [data, setData] = useState({
       items: [],
       pagination: { page: 1, total: 0, total_pages: 1 },
     }),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
+  const debouncedSearch = useDebouncedValue(filters.search);
+  useEffect(() => {
+    setFilters(stockFiltersFromNavigation(initialFilters));
+  }, [warehouseId, initialFilters]);
   async function load() {
     if (!warehouseId) {
       setError(warehouseError || t("noWarehouseContext"));
@@ -49,9 +71,14 @@ export default function Stock({ warehouseId, warehouses, warehouseError }) {
     }
   }
   useEffect(() => {
-    const timer = setTimeout(load, filters.search ? 250 : 0);
-    return () => clearTimeout(timer);
-  }, [filters, warehouseId]);
+    load();
+  }, [
+    debouncedSearch,
+    filters.status,
+    filters.page,
+    filters.limit,
+    warehouseId,
+  ]);
   function done() {
     setMode("list");
     load();
@@ -75,16 +102,27 @@ export default function Stock({ warehouseId, warehouses, warehouseError }) {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <ExportButton
+                    entity="stock"
+                    query={{ warehouse_id: warehouseId, search: debouncedSearch, status: filters.status }}
+                    onError={setError}
+                  />
                   <Action icon={PackagePlus} onClick={() => setMode("receive")}>
                     {t("receiveStock")}
                   </Action>
                   <Action icon={MinusPlus} onClick={() => setMode("adjust")}>
                     {t("adjustStock")}
                   </Action>
-                  <Action icon={ArrowLeftRight} onClick={() => setMode("transfer")}>
+                  <Action
+                    icon={ArrowLeftRight}
+                    onClick={() => setMode("transfer")}
+                  >
                     {t("transferStock")}
                   </Action>
-                  <Action icon={ClipboardList} onClick={() => setMode("history")}>
+                  <Action
+                    icon={ClipboardList}
+                    onClick={() => setMode("history")}
+                  >
                     {t("movementHistory")}
                   </Action>
                 </div>
@@ -109,7 +147,7 @@ export default function Stock({ warehouseId, warehouses, warehouseError }) {
                   />
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {["all", "low", "out", "expired", "expiring"].map(
+                  {["all", "attention", "low", "out", "expired", "expiring"].map(
                     (status) => (
                       <button
                         key={status}
@@ -125,6 +163,7 @@ export default function Stock({ warehouseId, warehouses, warehouseError }) {
                         {t(
                           {
                             all: "all",
+                            attention: "stockAttention",
                             low: "lowStock",
                             out: "outOfStock",
                             expired: "expired",
@@ -136,7 +175,7 @@ export default function Stock({ warehouseId, warehouses, warehouseError }) {
                   )}
                 </div>
               </div>
-              {error && <Error text={error} />}
+              <ErrorMessage message={error} onClose={() => setError("")} />
               <StockTable
                 items={data.items}
                 loading={loading}
@@ -281,6 +320,7 @@ function Operation({ mode, warehouseId, warehouses, onDone, onCancel }) {
     [destination, setDestination] = useState(""),
     [note, setNote] = useState(""),
     [price, setPrice] = useState(""),
+    [serialText, setSerialText] = useState(""),
     [saving, setSaving] = useState(false),
     [error, setError] = useState("");
   useEffect(() => {
@@ -315,6 +355,7 @@ function Operation({ mode, warehouseId, warehouses, onDone, onCancel }) {
         product_unit_id: Number(unitId),
         quantity: Number(quantity),
         note,
+        serial_numbers: serialText.split(/\n|,|;/).map(value=>value.trim()).filter(Boolean),
       };
       if (mode === "receive")
         await receiveStock({
@@ -359,18 +400,10 @@ function Operation({ mode, warehouseId, warehouses, onDone, onCancel }) {
   return (
     <form onSubmit={submit} className="border border-gray-300 bg-white">
       <PanelHeader title={title} onClose={onCancel} />
-      {error && <Error text={error} />}
+      <ErrorMessage message={error} onClose={() => setError("")} />
       <div className="space-y-5 p-5">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Select
-            label={t("product")}
-            value={productId}
-            onChange={setProductId}
-            options={products.map((item) => ({
-              id: item.id,
-              name: `${item.designation}${item.reference ? ` - ${item.reference}` : ""}`,
-            }))}
-          />
+          <label><span className="mb-2 block text-[11px] font-semibold">{t("product")}</span><SearchableSelect value={productId} onChange={setProductId} options={products} clearable={false} placeholder={t("product")} searchPlaceholder={t("Rechercher par désignation ou référence...")} getLabel={item=>`${item.designation}${item.reference?` - ${item.reference}`:""}`}/></label>
           <Select
             label={t("packaging")}
             value={unitId}
@@ -411,7 +444,7 @@ function Operation({ mode, warehouseId, warehouses, onDone, onCancel }) {
             value={quantity}
             onChange={setQuantity}
           />
-          {product?.track_batches &&
+          {Boolean(product?.track_batches) &&
             (removing ? (
               <Select
                 label={t("batchLot")}
@@ -429,7 +462,7 @@ function Operation({ mode, warehouseId, warehouses, onDone, onCancel }) {
                 onChange={setBatchNumber}
               />
             ))}
-          {product?.track_expiration && !removing && (
+          {Boolean(product?.track_expiration) && !removing && (
             <Input
               label={t("expirationDate")}
               type="date"
@@ -437,6 +470,7 @@ function Operation({ mode, warehouseId, warehouses, onDone, onCancel }) {
               onChange={setExpiration}
             />
           )}{" "}
+          {Boolean(product?.track_serials) && !removing && <label className="md:col-span-2"><span className="mb-2 flex justify-between text-[11px] font-semibold"><span>{t("Numéros de série — un par ligne")}</span><span>{serialText.split(/\n|,|;/).map(v=>v.trim()).filter(Boolean).length} / {base||0}</span></span><textarea value={serialText} onChange={e=>setSerialText(e.target.value)} rows="4" placeholder="SN-0001\nSN-0002" className="w-full border border-gray-400 p-3 font-mono text-[12px] outline-none"/></label>}
           {mode !== "transfer" && !removing && (
             <Input
               label={t("purchasePriceOptional")}
@@ -500,7 +534,17 @@ function History({ warehouseId, onClose }) {
   }, [filters, warehouseId]);
   return (
     <section className="border border-gray-300 bg-white">
-      <PanelHeader title={t("movementHistory")} onClose={onClose} />
+      <PanelHeader
+        title={t("movementHistory")}
+        onClose={onClose}
+        actions={(
+          <ExportButton
+            entity="stock_movements"
+            query={{ warehouse_id: warehouseId, status: filters.type }}
+            onError={setError}
+          />
+        )}
+      />
       <div className="border-b border-gray-200 bg-gray-50 p-4">
         <Select
           value={filters.type}
@@ -520,7 +564,7 @@ function History({ warehouseId, onClose }) {
           ]}
         />
       </div>
-      {error && <Error text={error} />}
+      <ErrorMessage message={error} onClose={() => setError("")} />
       <div className="overflow-x-auto">
         <table className="w-full text-left rtl:text-right">
           <thead>
@@ -574,19 +618,22 @@ function History({ warehouseId, onClose }) {
     </section>
   );
 }
-function PanelHeader({ title, onClose }) {
+function PanelHeader({ title, onClose, actions = null }) {
   const { t } = useLanguage();
   return (
     <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
       <h2 className="text-[17px] font-bold">{title}</h2>
-      <button
-        onClick={onClose}
-        type="button"
-        title={t("close")}
-        className="flex h-9 w-9 items-center justify-center border border-gray-400"
-      >
-        <X size={17} />
-      </button>
+      <div className="flex items-center gap-2">
+        {actions}
+        <button
+          onClick={onClose}
+          type="button"
+          title={t("close")}
+          className="flex h-9 w-9 items-center justify-center border border-gray-400"
+        >
+          <X size={17} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -644,19 +691,4 @@ function Pager({ pagination, onPage }) {
       </button>
     </div>
   );
-}
-function Error({ text }) {
-  return (
-    <div className="border-b border-red-200 bg-red-50 px-5 py-3 text-[12px] text-red-700">
-      {text}
-    </div>
-  );
-}
-function Th({ children }) {
-  return (
-    <th className="px-4 text-[12px] font-semibold first:px-5">{children}</th>
-  );
-}
-function Td({ children }) {
-  return <td className="px-4 text-[12px]">{children}</td>;
 }

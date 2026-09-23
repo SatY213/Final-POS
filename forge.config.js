@@ -1,15 +1,22 @@
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+const path = require('node:path');
 
 module.exports = {
   packagerConfig: {
     asar: true,
+    icon: path.join(__dirname, 'build-assets', 'app-icon'),
+    extraResource: [
+      path.join(__dirname, 'build-runtime'),
+      path.join(__dirname, 'build-demo', 'pos-modern.db'),
+      path.join(__dirname, 'build-assets', 'app-icon.png'),
+    ],
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: { name: 'POSModern', setupExe: 'POSModernSetup.exe', setupIcon: path.join(__dirname, 'build-assets', 'app-icon.ico') },
     },
     {
       name: '@electron-forge/maker-zip',

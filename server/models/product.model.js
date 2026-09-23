@@ -49,7 +49,7 @@ function findPage(filters) {
     direction = filters.direction === "desc" ? "DESC" : "ASC";
   const products = db
     .prepare(
-      `SELECT p.id,p.designation,p.reference,p.category_id,p.tax_rate,p.min_stock,p.track_stock,p.track_batches,p.track_expiration,p.track_serials,p.is_active,p.created_at,c.name category_name,base.unit_id,base.purchase_price,base.selling_price,u.name unit_name,u.symbol unit_symbol,u.is_builtin unit_is_builtin,(SELECT barcode FROM product_barcodes b WHERE b.product_id=p.id ORDER BY is_primary DESC,id LIMIT 1) primary_barcode,(SELECT COUNT(*) FROM product_barcodes b WHERE b.product_id=p.id) barcode_count,(SELECT COUNT(*) FROM product_units pu WHERE pu.product_id=p.id AND pu.is_active=1) package_count,${stock} stock_quantity FROM products p LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN product_units base ON base.product_id=p.id AND base.is_base=1 LEFT JOIN units u ON u.id=base.unit_id ${where} ORDER BY ${sort} ${direction},p.id LIMIT @limit OFFSET @offset`,
+      `SELECT p.id,p.designation,p.reference,p.image_data,p.category_id,p.min_stock,p.track_stock,p.track_batches,p.track_expiration,p.track_serials,p.is_active,p.created_at,c.name category_name,base.unit_id,base.purchase_price,base.selling_price,u.name unit_name,u.symbol unit_symbol,u.is_builtin unit_is_builtin,(SELECT barcode FROM product_barcodes b WHERE b.product_id=p.id ORDER BY is_primary DESC,id LIMIT 1) primary_barcode,(SELECT COUNT(*) FROM product_barcodes b WHERE b.product_id=p.id) barcode_count,(SELECT COUNT(*) FROM product_units pu WHERE pu.product_id=p.id AND pu.is_active=1) package_count,${stock} stock_quantity FROM products p LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN product_units base ON base.product_id=p.id AND base.is_base=1 LEFT JOIN units u ON u.id=base.unit_id ${where} ORDER BY ${sort} ${direction},p.id LIMIT @limit OFFSET @offset`,
     )
     .all(params);
   const countParams = { ...params };
@@ -94,6 +94,7 @@ function findById(id) {
       )),
   );
   product.barcodes = barcodes;
+  product.stock_by_warehouse=db.prepare(`SELECT w.id warehouse_id,w.name warehouse_name,COALESCE(ps.quantity,0) quantity,(SELECT COUNT(*) FROM stock_serials ss WHERE ss.product_id=? AND ss.warehouse_id=w.id AND ss.status='AVAILABLE') available_serials FROM warehouses w LEFT JOIN product_stock ps ON ps.warehouse_id=w.id AND ps.product_id=? WHERE w.is_active=1 AND (ps.quantity IS NOT NULL OR EXISTS(SELECT 1 FROM stock_serials ss WHERE ss.product_id=? AND ss.warehouse_id=w.id)) ORDER BY w.name COLLATE NOCASE`).all(id,id,id);
   const base = product.product_units.find((unit) => unit.is_base);
   if (base)
     Object.assign(product, {
@@ -191,9 +192,11 @@ function insertInitialStock(productId, data) {
       "INSERT INTO stock_batches(product_id,warehouse_id,batch_number,expiration_date,quantity,purchase_price) VALUES(?,?,?,?,?,?)",
     );
   const movement=db.prepare("INSERT INTO stock_movements(product_id,warehouse_id,batch_id,type,quantity,reference_type,reference_id,note,created_by) VALUES(?,?,?,'INITIAL_STOCK',?,'PRODUCT',?,NULL,?)");
+  const serial=db.prepare("INSERT INTO stock_serials(product_id,warehouse_id,serial_number,status) VALUES(?,?,?,'AVAILABLE')");
   data.initial_stock.forEach((row) => {
     const unit = data.product_units[row.product_unit_index],
       quantity = row.quantity * unit.conversion_factor;
+    if (!(quantity > 0)) return;
     totals.set(
       row.warehouse_id,
       (totals.get(row.warehouse_id) || 0) + quantity,
@@ -210,6 +213,7 @@ function insertInitialStock(productId, data) {
           ? null
           : row.purchase_price / unit.conversion_factor,
       ).lastInsertRowid);
+    if (data.track_serials) row.serial_numbers.forEach(number=>serial.run(productId,row.warehouse_id,number));
     movement.run(productId,row.warehouse_id,batchId,quantity,String(productId),data.created_by);
   });
   const add = db.prepare(
@@ -223,7 +227,7 @@ const create = db.transaction((data) => {
   const base = data.product_units.find((unit) => unit.is_base),
     result = db
       .prepare(
-        "INSERT INTO products(designation,reference,category_id,unit_id,purchase_price,selling_price,tax_rate,min_stock,track_stock,track_batches,track_expiration,track_serials,has_expiration,description,is_active) VALUES(@designation,@reference,@category_id,@unit_id,@purchase_price,@selling_price,@tax_rate,@min_stock,@track_stock,@track_batches,@track_expiration,@track_serials,@has_expiration,@description,@is_active)",
+        "INSERT INTO products(designation,reference,image_data,category_id,unit_id,purchase_price,selling_price,min_stock,track_stock,track_batches,track_expiration,track_serials,has_expiration,description,is_active) VALUES(@designation,@reference,@image_data,@category_id,@unit_id,@purchase_price,@selling_price,@min_stock,@track_stock,@track_batches,@track_expiration,@track_serials,@has_expiration,@description,@is_active)",
       )
       .run({
         ...data,
@@ -245,7 +249,7 @@ const create = db.transaction((data) => {
 const update = db.transaction((id, data) => {
   const base = data.product_units.find((unit) => unit.is_base);
   db.prepare(
-    "UPDATE products SET designation=@designation,reference=@reference,category_id=@category_id,unit_id=@unit_id,purchase_price=@purchase_price,selling_price=@selling_price,tax_rate=@tax_rate,min_stock=@min_stock,track_stock=@track_stock,track_batches=@track_batches,track_expiration=@track_expiration,track_serials=@track_serials,has_expiration=@has_expiration,description=@description,is_active=@is_active,updated_at=CURRENT_TIMESTAMP WHERE id=@id",
+    "UPDATE products SET designation=@designation,reference=@reference,image_data=@image_data,category_id=@category_id,unit_id=@unit_id,purchase_price=@purchase_price,selling_price=@selling_price,min_stock=@min_stock,track_stock=@track_stock,track_batches=@track_batches,track_expiration=@track_expiration,track_serials=@track_serials,has_expiration=@has_expiration,description=@description,is_active=@is_active,updated_at=CURRENT_TIMESTAMP WHERE id=@id",
   ).run({
     id,
     ...data,
@@ -262,17 +266,40 @@ const update = db.transaction((id, data) => {
   saveUnits(id, data.product_units, true);
   return findById(id);
 });
+const remove = db.transaction((id) => {
+  const current = findById(id);
+  if (!current) return null;
+
+  // Commercial documents keep their immutable designation, price and unit snapshots.
+  // Only their optional live-catalog links are detached before deleting the product.
+  for (const table of ["sale_lines", "quote_lines"]) {
+    db.prepare(`UPDATE ${table} SET product_id=NULL,product_unit_id=NULL WHERE product_id=?`).run(id);
+  }
+  for (const table of ["delivery_lines", "sales_return_lines"]) {
+    db.prepare(`UPDATE ${table} SET product_id=NULL WHERE product_id=?`).run(id);
+  }
+
+  db.prepare("DELETE FROM sale_batch_allocations WHERE batch_id IN (SELECT id FROM stock_batches WHERE product_id=?)").run(id);
+  db.prepare("DELETE FROM sale_serial_allocations WHERE serial_id IN (SELECT id FROM stock_serials WHERE product_id=?)").run(id);
+  db.prepare("DELETE FROM stock_movements WHERE product_id=?").run(id);
+  db.prepare("DELETE FROM stock_batches WHERE product_id=?").run(id);
+  db.prepare("DELETE FROM stock_serials WHERE product_id=?").run(id);
+  db.prepare("DELETE FROM product_stock WHERE product_id=?").run(id);
+  db.prepare("DELETE FROM product_barcodes WHERE product_id=?").run(id);
+  db.prepare("DELETE FROM product_units WHERE product_id=?").run(id);
+  db.prepare("DELETE FROM products WHERE id=?").run(id);
+  return current;
+});
 function findActiveWarehouses(user) {
-  if (user.role === "admin")
+  if (user.role === "admin" || (!user.warehouse_ids?.length && user.warehouse_id == null))
     return db
       .prepare(
         "SELECT id,name FROM warehouses WHERE is_active=1 ORDER BY name COLLATE NOCASE",
       )
       .all();
-  return user.warehouse_id
-    ? db
-        .prepare("SELECT id,name FROM warehouses WHERE id=? AND is_active=1")
-        .all(user.warehouse_id)
+  const ids = user.warehouse_ids?.length ? user.warehouse_ids : [user.warehouse_id].filter(Boolean);
+  return ids.length
+    ? db.prepare(`SELECT id,name FROM warehouses WHERE is_active=1 AND id IN (${ids.map(() => "?").join(",")}) ORDER BY name COLLATE NOCASE`).all(...ids)
     : [];
 }
 module.exports = {
@@ -284,6 +311,7 @@ module.exports = {
   hasBatchRows,
   create,
   update,
+  remove,
   setActive(id, active) {
     const result = db
       .prepare(

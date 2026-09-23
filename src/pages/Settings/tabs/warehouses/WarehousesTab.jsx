@@ -153,7 +153,7 @@ export default function WarehousesTab() {
                   </th>
 
                   <th className="px-4 text-[12px] font-semibold text-black">
-                    NIF
+                    {t("nif")}
                   </th>
 
                   <th className="px-4 text-[12px] font-semibold text-black">

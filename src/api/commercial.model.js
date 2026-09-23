@@ -1,0 +1,13 @@
+import { apiGet, apiPatch, apiPost, apiPut, toQuery } from "./client";
+export const getQuotes=(params)=>apiGet(`/api/quotes?${toQuery(params)}`);
+export const getQuote=(id)=>apiGet(`/api/quotes/${id}`).then(r=>r.quote);
+export const saveQuote=(body)=>apiPost("/api/quotes",body).then(r=>r.quote);
+export const updateQuote=(id,body)=>apiPut(`/api/quotes/${id}`,body).then(r=>r.quote);
+export const updateQuoteStatus=(id,status)=>apiPatch(`/api/quotes/${id}/status`,{status}).then(r=>r.quote);
+export const getDeliveries=(params)=>apiGet(`/api/deliveries?${toQuery(params)}`);
+export const getDelivery=(id)=>apiGet(`/api/deliveries/${id}`).then(r=>r.delivery);
+export const validateDelivery=(id)=>apiPost(`/api/deliveries/${id}/ship`,{}).then(r=>r.delivery);
+export const deliverDelivery=(id)=>apiPost(`/api/deliveries/${id}/deliver`,{}).then(r=>r.delivery);
+export const addSalePayment=(saleId,body)=>apiPost(`/api/sales/${saleId}/payments`,body).then(r=>r.payment_summary);
+export const createSaleReturn=(saleId,body)=>apiPost(`/api/sales/${saleId}/returns`,body).then(r=>r.return_document);
+export const getSaleReturn=(id)=>apiGet(`/api/returns/${id}`).then(r=>r.return_document);

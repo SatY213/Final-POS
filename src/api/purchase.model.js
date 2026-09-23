@@ -1,0 +1,14 @@
+import { apiGet, apiPost, apiPut, toQuery } from "./client";
+const base = "/api/purchases";
+export const getPurchaseContext = (warehouseId) => apiGet(`${base}/context?${toQuery({ warehouse_id: warehouseId })}`);
+export const createSupplier = (body) => apiPost(`${base}/suppliers`, body).then((r) => r.supplier);
+export const getPurchaseOrders = (warehouseId) => apiGet(`${base}/orders?${toQuery({ warehouse_id: warehouseId })}`).then((r) => r.orders);
+export const getPurchaseOrder = (id) => apiGet(`${base}/orders/${id}`).then((r) => r.order);
+export const createPurchaseOrder = (body) => apiPost(`${base}/orders`, body).then((r) => r.order);
+export const getPurchaseReceipts = (warehouseId) => apiGet(`${base}/receipts?${toQuery({ warehouse_id: warehouseId })}`).then((r) => r.receipts);
+export const createPurchaseReceipt = (body) => apiPost(`${base}/receipts`, body).then((r) => r.receipt);
+export const updatePurchaseReceipt = (id, body) => apiPut(`${base}/receipts/${id}`, body).then((r) => r.receipt);
+export const addPurchaseReceiptPayment = (id, body) => apiPost(`${base}/receipts/${id}/payments`, body).then((r) => r.receipt);
+export const getSupplierReturns = (warehouseId) => apiGet(`${base}/returns?${toQuery({ warehouse_id: warehouseId })}`).then((r) => r.returns);
+export const getSupplierReturn = (id) => apiGet(`${base}/returns/${id}`).then((r) => r.return_document);
+export const createSupplierReturn = (receiptId, body) => apiPost(`${base}/receipts/${receiptId}/returns`, body).then((r) => r.return_document);

@@ -51,6 +51,25 @@ function setActive(id, isActive) {
 function findGeneric() {
   return db.prepare("SELECT id, name, symbol, is_builtin, is_active FROM units WHERE is_builtin = 1 LIMIT 1").get();
 }
+function usageCount(id) {
+  return Number(db.prepare("SELECT COUNT(*) count FROM product_units WHERE unit_id=?").get(id).count);
+}
+function remove(id) {
+  const current = findById(id);
+  if (!current) return null;
+  if (current.is_builtin) {
+    const error = new Error("The built-in generic unit cannot be deleted");
+    error.status = 409;
+    throw error;
+  }
+  if (usageCount(id)) {
+    const error = new Error("Unit is used by one or more products");
+    error.status = 409;
+    throw error;
+  }
+  db.prepare("DELETE FROM units WHERE id=?").run(id);
+  return current;
+}
 module.exports = {
   findAll,
   findById,
@@ -59,4 +78,6 @@ module.exports = {
   update,
   setActive,
   findGeneric,
+  usageCount,
+  remove,
 };

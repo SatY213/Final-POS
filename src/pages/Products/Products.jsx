@@ -2,36 +2,54 @@ import { useEffect, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  Download,
   FolderCog,
   Package,
   Plus,
+  Printer,
   Ruler,
   Search,
+  Trash2,
+  Upload,
 } from "lucide-react";
 import {
   getCategories,
+  deleteProduct,
   getProduct,
   getProducts,
   getUnits,
   setProductActive,
 } from "../../api/product.model";
+import { getPrintProfiles } from "../../api/settings.model";
 import { useLanguage } from "../../i18n/LanguageContext";
 import ProductForm from "./ProductForm";
 import SupportingManager from "./components/SupportingManager";
+import useDebouncedValue from "../../hooks/useDebouncedValue";
+import SearchableSelect from "../../components/ui/SearchableSelect";
+import Th from "../../components/ui/Th";
+import Td from "../../components/ui/Td";
+import BarcodeLabelDialog from "./BarcodeLabelDialog";
+import ErrorMessage from "../../components/ui/ErrorMessage";
+import Modal from "../../components/ui/Modal";
+import { formatMoney } from "../../utils/formatters";
+import { getRuntimeSettings } from "../../utils/runtimeSettings";
+import DataExchangeDialog from "../../components/data-exchange/DataExchangeDialog";
+import { exportData } from "../../api/data-exchange.model";
 
-const defaultFilters = {
+const defaultFilters = () => ({
   search: "",
   category_id: "",
   status: "active",
   stock_status: "all",
   tracking: "all",
   page: 1,
-  limit: 25,
+  limit: Number(getRuntimeSettings().default_page_size || 25),
   sort: "designation",
   direction: "asc",
-};
+});
 
 export default function Products({
+  session,
   warehouseId,
   warehouses,
   warehouseError,
@@ -43,7 +61,7 @@ export default function Products({
   const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 25,
+    limit: Number(getRuntimeSettings().default_page_size || 25),
     total: 0,
     total_pages: 1,
   });
@@ -52,14 +70,29 @@ export default function Products({
   const [filters, setFilters] = useState(defaultFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [deletingProductId, setDeletingProductId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState({});
+  const [labelProducts, setLabelProducts] = useState([]);
+  const [labelProfile, setLabelProfile] = useState(null);
+  const [exchangeEntity, setExchangeEntity] = useState(null);
+  const canManage = ["admin", "manager"].includes(session?.user?.role);
+  const imagesEnabled = Boolean(getRuntimeSettings().product_images_enabled);
+  const debouncedSearch = useDebouncedValue(filters.search);
 
   async function loadLookups() {
-    const [categoryData, unitData] = await Promise.all([
+    const [categoryData, unitData, profiles] = await Promise.all([
       getCategories(),
       getUnits(),
+      getPrintProfiles(),
     ]);
     setCategories(categoryData);
     setUnits(unitData);
+    setLabelProfile(
+      profiles.find((profile) => profile.document_type === "BARCODE_LABEL") ||
+        null,
+    );
   }
   async function loadProducts() {
     if (!warehouseId) {
@@ -84,9 +117,19 @@ export default function Products({
     loadLookups().catch((err) => setError(err.message));
   }, []);
   useEffect(() => {
-    const timer = setTimeout(loadProducts, filters.search ? 250 : 0);
-    return () => clearTimeout(timer);
-  }, [filters, warehouseId]);
+    loadProducts();
+  }, [
+    debouncedSearch,
+    filters.category_id,
+    filters.status,
+    filters.stock_status,
+    filters.tracking,
+    filters.page,
+    filters.limit,
+    filters.sort,
+    filters.direction,
+    warehouseId,
+  ]);
   function updateFilter(name, value) {
     setFilters((current) => ({
       ...current,
@@ -114,10 +157,62 @@ export default function Products({
       setError(err.message);
     }
   }
+  async function removeProduct(product) {
+    if (!product || deletingProductId != null) return;
+    try {
+      setError("");
+      setDeletingProductId(product.id);
+      await deleteProduct(product.id);
+      setSelectedIds((ids) =>
+        ids.filter((id) => Number(id) !== Number(product.id)),
+      );
+      await loadProducts();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingProductId(null);
+      setProductToDelete(null);
+    }
+  }
+  function requestProductDelete(product) {
+    if (getRuntimeSettings().confirm_destructive_actions) setProductToDelete(product);
+    else removeProduct(product);
+  }
   async function returnToList(refresh = false) {
     setMode("list");
     setSelected(null);
     if (refresh) await loadProducts();
+  }
+  const normalizeLabelProduct = (product) => {
+    const base =
+        product.product_units?.find((unit) => unit.is_base) ||
+        product.product_units?.[0],
+      barcodeRow =
+        base?.barcodes?.find((row) => row.is_primary) || base?.barcodes?.[0];
+    return {
+      id: product.id,
+      designation: product.designation,
+      reference: product.reference || "",
+      selling_price: Number(base?.selling_price ?? product.selling_price ?? 0),
+      barcode: barcodeRow?.barcode || product.primary_barcode || "",
+    };
+  };
+  function openLabels(items) {
+    const normalized = items.map(normalizeLabelProduct);
+    if (!normalized.length) return;
+    setLabelProducts(normalized);
+  }
+  function changeSelection(nextIds) {
+    const uniqueIds = [...new Set(nextIds)];
+    setSelectedIds(uniqueIds);
+    setSelectedProducts((current) => {
+      const next = {};
+      uniqueIds.forEach((id) => {
+        const visible = products.find((product) => product.id === id);
+        if (visible || current[id]) next[id] = visible || current[id];
+      });
+      return next;
+    });
   }
 
   return (
@@ -134,6 +229,7 @@ export default function Products({
               onLookupsChanged={loadLookups}
               onCancel={() => returnToList()}
               onSaved={() => returnToList(true)}
+              onPrintLabel={() => openLabels([selected])}
             />
           )}
           {mode === "categories" && (
@@ -167,6 +263,49 @@ export default function Products({
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => exportData("products", { warehouse_id: warehouseId, search: filters.search, status: filters.status, category_id: filters.category_id }).catch((reason) => setError(reason.message))}
+                    className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold"
+                  >
+                    <Download size={17} />
+                    {t("exportData")}
+                  </button>
+                  {canManage && (
+                    <button
+                      type="button"
+                      onClick={() => setExchangeEntity("products")}
+                      className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold"
+                    >
+                      <Upload size={17} />
+                      {t("importData")}
+                    </button>
+                  )}
+                  {canManage && (
+                    <button
+                      type="button"
+                      onClick={() => setExchangeEntity("initial_stock")}
+                      className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold"
+                    >
+                      <Upload size={17} />
+                      {t("importInitialStock")}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={!selectedIds.length || selectedIds.some((id) => !selectedProducts[id]?.primary_barcode)}
+                    onClick={() =>
+                      openLabels(
+                        selectedIds
+                          .map((id) => selectedProducts[id])
+                          .filter(Boolean),
+                      )
+                    }
+                    className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold disabled:opacity-40"
+                  >
+                    <Printer size={17} />
+                    {t("printLabels")} ({selectedIds.length})
+                  </button>
                   <button
                     type="button"
                     onClick={() => setMode("categories")}
@@ -211,10 +350,11 @@ export default function Products({
                     className="h-[42px] w-full border border-gray-400 bg-white ps-9 pe-3 text-[12px] outline-none"
                   />
                 </label>
-                <Filter
+                <SearchableSelect
                   value={filters.category_id}
                   onChange={(value) => updateFilter("category_id", value)}
                   placeholder={t("allCategories")}
+                  searchPlaceholder={t("Rechercher une catégorie...")}
                   options={categories.filter((item) => item.is_active)}
                 />
                 <Filter
@@ -248,11 +388,7 @@ export default function Products({
                   ]}
                 />
               </div>
-              {error && (
-                <div className="border-b border-red-200 bg-red-50 px-5 py-3 text-[12px] text-red-700">
-                  {error}
-                </div>
-              )}
+              <ErrorMessage message={error} onClose={() => setError("")} />
               <ProductsTable
                 products={products}
                 loading={loading}
@@ -261,7 +397,12 @@ export default function Products({
                 language={language}
                 onEdit={editProduct}
                 onToggle={toggleProduct}
+                onDelete={requestProductDelete}
                 onAdd={() => setMode("form")}
+                onPrint={(product) => openLabels([product])}
+                selectedIds={selectedIds}
+                onSelectionChange={changeSelection}
+                imagesEnabled={imagesEnabled}
               />
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-5 py-3">
                 <p className="text-[11px] text-black/55">
@@ -302,6 +443,45 @@ export default function Products({
               </div>
             </section>
           )}
+          <BarcodeLabelDialog
+            products={labelProducts}
+            profile={
+              labelProfile || {
+                paper_format: "50x30mm",
+                configuration: {
+                  show_product_name: true,
+                  show_price: true,
+                  show_reference: true,
+                },
+              }
+            }
+            onClose={() => setLabelProducts([])}
+            setError={setError}
+          />
+          <DataExchangeDialog
+            open={Boolean(exchangeEntity)}
+            entity={exchangeEntity || "products"}
+            title={exchangeEntity === "initial_stock" ? t("importInitialStock") : t("importProducts")}
+            onClose={() => setExchangeEntity(null)}
+            onImported={async () => {
+              await loadLookups();
+              await loadProducts();
+            }}
+          />
+          <Modal
+            open={Boolean(productToDelete)}
+            title={t("deleteProduct")}
+            onClose={() => !deletingProductId && setProductToDelete(null)}
+            width="sm"
+            footer={<>
+              <button type="button" onClick={() => setProductToDelete(null)} disabled={Boolean(deletingProductId)} className="h-9 border border-gray-400 px-4 text-[12px] font-semibold disabled:opacity-50">{t("cancel")}</button>
+              <button type="button" onClick={() => removeProduct(productToDelete)} disabled={Boolean(deletingProductId)} className="h-9 border border-red-700 bg-red-700 px-4 text-[12px] font-semibold text-white disabled:opacity-50">{deletingProductId ? t("deleting") : t("delete")}</button>
+            </>}
+          >
+            <div className="p-5 text-[13px] leading-6 text-black/75">
+              {t("confirmDeleteProduct").replace("{product}", productToDelete?.designation || "")}
+            </div>
+          </Modal>
         </div>
       </main>
     </div>
@@ -332,7 +512,12 @@ function ProductsTable({
   language,
   onEdit,
   onToggle,
+  onDelete,
   onAdd,
+  onPrint,
+  selectedIds,
+  onSelectionChange,
+  imagesEnabled,
 }) {
   const hasFilters =
     filters.search ||
@@ -345,6 +530,30 @@ function ProductsTable({
       <table className="w-full border-collapse text-left rtl:text-right">
         <thead>
           <tr className="h-[44px] border-b border-gray-300 bg-gray-50">
+            <th className="w-10 px-4">
+              <input
+                type="checkbox"
+                checked={
+                  products.length > 0 &&
+                  products.every((product) => selectedIds.includes(product.id))
+                }
+                onChange={(e) =>
+                  onSelectionChange(
+                    e.target.checked
+                      ? [
+                          ...new Set([
+                            ...selectedIds,
+                            ...products.map((product) => product.id),
+                          ]),
+                        ]
+                      : selectedIds.filter(
+                          (id) =>
+                            !products.some((product) => product.id === id),
+                        ),
+                  )
+                }
+              />
+            </th>
             <Th>{t("product")}</Th>
             <Th>{t("reference")}</Th>
             <Th>{t("barcode")}</Th>
@@ -361,7 +570,7 @@ function ProductsTable({
           {loading ? (
             <tr>
               <td
-                colSpan="10"
+                colSpan="11"
                 className="h-[130px] text-center text-[13px] text-black/50"
               >
                 {t("loadingProducts")}
@@ -369,7 +578,7 @@ function ProductsTable({
             </tr>
           ) : !products.length ? (
             <tr>
-              <td colSpan="10" className="h-[180px] text-center">
+              <td colSpan="11" className="h-[180px] text-center">
                 <Package size={24} className="mx-auto text-black/35" />
                 <p className="mt-3 text-[13px] font-semibold">
                   {t(hasFilters ? "noMatchingProducts" : "noProducts")}
@@ -382,8 +591,24 @@ function ProductsTable({
                 key={product.id}
                 className="h-[48px] border-b border-gray-200"
               >
+                <td className="px-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(product.id)}
+                    onChange={(e) =>
+                      onSelectionChange(
+                        e.target.checked
+                          ? [...selectedIds, product.id]
+                          : selectedIds.filter((id) => id !== product.id),
+                      )
+                    }
+                  />
+                </td>
                 <td className="px-5 text-[13px] font-semibold">
-                  {product.designation}
+                  <div className="flex items-center gap-2">
+                    {imagesEnabled && product.image_data && <img src={product.image_data} alt="" className="h-8 w-8 shrink-0 border border-gray-200 object-cover" />}
+                    <span>{product.designation}</span>
+                  </div>
                 </td>
                 <Td>{product.reference || "-"}</Td>
                 <Td>
@@ -393,7 +618,9 @@ function ProductsTable({
                 </Td>
                 <Td>{product.category_name || "-"}</Td>
                 <Td>
-                  {product.unit_is_builtin ? "-" : product.unit_symbol || product.unit_name || "-"}
+                  {product.unit_is_builtin
+                    ? "-"
+                    : product.unit_symbol || product.unit_name || "-"}
                   {product.package_count > 1 && (
                     <span className="ms-1 text-[10px] text-black/45">
                       +{product.package_count - 1}
@@ -401,10 +628,7 @@ function ProductsTable({
                   )}
                 </Td>
                 <Td>
-                  {Number(product.selling_price).toLocaleString(language, {
-                    minimumFractionDigits: 2,
-                  })}{" "}
-                  DA
+                  {formatMoney(product.selling_price)}
                 </Td>
                 <Td>
                   <Tracking product={product} t={t} />
@@ -430,20 +654,24 @@ function ProductsTable({
                   </span>
                 </td>
                 <td className="whitespace-nowrap px-4 text-right rtl:text-left">
-                  <button
-                    type="button"
-                    onClick={() => onEdit(product.id)}
-                    className="me-2 h-[30px] border border-gray-400 px-3 text-[11px] font-semibold"
-                  >
-                    {t("edit")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onToggle(product)}
-                    className={`h-[30px] border px-3 text-[11px] font-semibold ${product.is_active ? "border-red-300 text-red-700" : "border-green-300 text-green-700"}`}
-                  >
-                    {t(product.is_active ? "deactivate" : "activate")}
-                  </button>
+                  <div className="inline-flex items-center gap-2">
+                    <button type="button" disabled={!product.primary_barcode} onClick={() => onPrint(product)} title={product.primary_barcode ? t("printLabels") : t("Aucun code-barres")} className="inline-flex h-[30px] items-center justify-center border border-gray-400 px-3 text-[11px] font-semibold disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-black/30 disabled:opacity-60">
+                      <Printer size={15} />
+                    </button>
+                    <button type="button" onClick={() => onDelete(product)} title={t("delete")} className="inline-flex h-[30px] items-center justify-center border border-red-400 px-3 text-[11px] font-semibold text-red-700 hover:bg-red-50">
+                      <Trash2 size={15} />
+                    </button>
+                    <button type="button" onClick={() => onEdit(product.id)} className="inline-flex h-[30px] items-center justify-center border border-gray-400 px-3 text-[11px] font-semibold">
+                      {t("edit")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onToggle(product)}
+                      className={`inline-flex h-[30px] items-center justify-center border px-3 text-[11px] font-semibold ${product.is_active ? "border-red-300 text-red-700" : "border-green-300 text-green-700"}`}
+                    >
+                      {t(product.is_active ? "deactivate" : "activate")}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))
@@ -467,18 +695,7 @@ function Tracking({ product, t }) {
     <span className="text-[11px] font-semibold text-black/60">{t(key)}</span>
   );
 }
-function Th({ children, right }) {
-  return (
-    <th
-      className={`px-4 text-[12px] font-semibold first:px-5 ${right ? "text-right rtl:text-left" : ""}`}
-    >
-      {children}
-    </th>
-  );
-}
-function Td({ children }) {
-  return <td className="px-4 text-[12px]">{children}</td>;
-}
+
 function StockValue({ value, min, t }) {
   const quantity = Number(value);
   const state =

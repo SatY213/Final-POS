@@ -7,4 +7,5 @@ router.get("/", Controller.list);
 router.post("/", Controller.create);
 router.put("/:id", Controller.update);
 router.patch("/:id/status", Controller.setStatus);
+router.delete("/:id", Controller.remove);
 module.exports = router;

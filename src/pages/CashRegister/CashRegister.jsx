@@ -3,14 +3,11 @@ import {
   ArrowDownToLine,
   ArrowLeft,
   ArrowUpFromLine,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   History,
   LockKeyhole,
   Plus,
   Wallet,
-  X,
 } from "lucide-react";
 import {
   closeCashSession,
@@ -21,6 +18,14 @@ import {
   openCashSession,
 } from "../../api/cash-session.model";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { formatDateTime, formatMoney } from "../../utils/formatters";
+import Modal from "../../components/ui/Modal";
+import Button from "../../components/ui/Button";
+import ErrorMessage from "../../components/ui/ErrorMessage";
+import Pagination from "../../components/ui/Pagination";
+import StatusBadge from "../../components/ui/StatusBadge";
+import { getRuntimeSettings } from "../../utils/runtimeSettings";
+import ExportButton from "../../components/data-exchange/ExportButton";
 
 export default function CashRegister({
   session: auth,
@@ -40,7 +45,7 @@ export default function CashRegister({
     user_id: "",
     status: "",
     page: 1,
-    limit: 25,
+    limit: Number(getRuntimeSettings().default_page_size || 25),
   });
   const [modal, setModal] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -81,15 +86,8 @@ export default function CashRegister({
       setError(err.message);
     }
   }
-  const cash = (value) =>
-    `${Number(value || 0).toLocaleString(language, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DA`;
-  const date = (value) =>
-    value
-      ? new Intl.DateTimeFormat(language, {
-          dateStyle: "short",
-          timeStyle: "short",
-        }).format(new Date(`${value.replace(" ", "T")}Z`))
-      : "-";
+  const cash = (value) => formatMoney(value, language);
+  const date = (value) => formatDateTime(value, language);
   if (isStock)
     return (
       <Page>
@@ -127,14 +125,27 @@ export default function CashRegister({
               </p>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+          <ExportButton
+            entity="cash_movements"
+            query={{
+              warehouse_id: warehouseId,
+              from: filters.date,
+              to: filters.date,
+              cash_register_id: filters.cash_register_id,
+              user_id: filters.user_id,
+            }}
+            onError={setError}
+          />
           {!current && (
             <button onClick={() => setModal("open")} className="primary">
               <Plus size={17} />
               {t("openCashRegister")}
             </button>
           )}
+          </div>
         </div>
-        {error && <Error message={error} />}{" "}
+        <ErrorMessage message={error} onClose={() => setError("")} />
         {current ? (
           <div className="p-5">
             <div className="mb-4 flex items-center justify-between">
@@ -145,7 +156,7 @@ export default function CashRegister({
                 {t("open")}
               </span>
             </div>
-            <div className="grid border border-gray-300 sm:grid-cols-2 lg:grid-cols-7">
+            <div className="grid border border-gray-300 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
               <Info
                 label={t("cashRegister")}
                 value={current.cash_register_name}
@@ -155,6 +166,10 @@ export default function CashRegister({
               <Info
                 label={t("openingFund")}
                 value={cash(current.opening_cash)}
+              />
+              <Info
+                label={t("cashSales")}
+                value={cash(current.cash_sales_total)}
               />
               <Info
                 label={t("manualCashIn")}
@@ -195,6 +210,8 @@ export default function CashRegister({
             </div>
             <MovementTable
               movements={current.movements || []}
+              openingCash={current.opening_cash}
+              openedAt={current.opened_at}
               cash={cash}
               date={date}
               t={t}
@@ -291,25 +308,11 @@ export default function CashRegister({
           t={t}
           onView={view}
         />
-        <div className="flex justify-end gap-2 border-t border-gray-200 p-3">
-          <button
-            disabled={history.pagination.page <= 1}
-            onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-            className="icon-button"
-          >
-            <ChevronLeft size={15} />
-          </button>
-          <span className="min-w-20 py-2 text-center text-[11px]">
-            {history.pagination.page} / {history.pagination.total_pages}
-          </span>
-          <button
-            disabled={history.pagination.page >= history.pagination.total_pages}
-            onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-            className="icon-button"
-          >
-            <ChevronRight size={15} />
-          </button>
-        </div>
+        <Pagination
+          page={history.pagination.page}
+          totalPages={history.pagination.total_pages}
+          onPageChange={(page) => setFilters({ ...filters, page })}
+        />
       </section>
       {modal && (
         <CashModal
@@ -351,7 +354,9 @@ function CashModal({
       getAvailableCashRegisters(warehouseId)
         .then((items) => {
           setRegisters(items);
-          if (items.length === 1) setRegisterId(String(items[0].id));
+          const preferred = Number(getRuntimeSettings().default_cash_register_id);
+          const selected = items.find((item) => Number(item.id) === preferred) || (items.length === 1 ? items[0] : null);
+          if (selected) setRegisterId(String(selected.id));
         })
         .catch((err) => setError(err.message));
   }, [type, warehouseId]);
@@ -399,19 +404,27 @@ function CashModal({
     }
   }
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
-      <form
-        onSubmit={submit}
-        className="w-full max-w-[620px] border border-gray-400 bg-white shadow-xl"
-      >
-        <div className="flex items-center justify-between border-b border-gray-300 px-5 py-4">
-          <h2 className="text-[16px] font-bold">{title}</h2>
-          <button type="button" onClick={onClose} className="icon-button">
-            <X size={17} />
-          </button>
-        </div>
-        {error && <Error message={error} />}
-        <div className="space-y-4 p-5">
+    <Modal
+      open
+      title={title}
+      onClose={onClose}
+      footer={
+        <>
+          <Button onClick={onClose}>{t("cancel")}</Button>
+          <Button
+            type="submit"
+            form="cash-operation-form"
+            variant="primary"
+            disabled={saving || (type === "open" && !registerId)}
+          >
+            {saving ? t("saving") : title}
+          </Button>
+        </>
+      }
+    >
+      <form id="cash-operation-form" onSubmit={submit}>
+        <ErrorMessage message={error} onClose={() => setError("")} />
+        <div className="space-y-4 p-5 flex flex-col ">
           {type === "open" && (
             <Field label={t("cashRegister")}>
               <select
@@ -438,6 +451,10 @@ function CashModal({
               <Line
                 label={t("openingFund")}
                 value={cash(session.opening_cash)}
+              />
+              <Line
+                label={t("cashSales")}
+                value={cash(session.cash_sales_total)}
               />
               <Line
                 label={t("manualCashIn")}
@@ -498,22 +515,11 @@ function CashModal({
             </div>
           )}
         </div>
-        <div className="flex justify-end gap-3 border-t border-gray-300 p-4">
-          <button type="button" onClick={onClose} className="secondary">
-            {t("cancel")}
-          </button>
-          <button
-            disabled={saving || (type === "open" && !registerId)}
-            className="primary"
-          >
-            {saving ? t("saving") : title}
-          </button>
-        </div>
       </form>
-    </div>
+    </Modal>
   );
 }
-function MovementTable({ movements, cash, date, t }) {
+function MovementTable({ movements, openingCash, openedAt, cash, date, t }) {
   return (
     <div className="mt-5">
       <h3 className="mb-3 text-[13px] font-semibold">{t("cashMovements")}</h3>
@@ -523,6 +529,7 @@ function MovementTable({ movements, cash, date, t }) {
             <tr className="h-10 bg-gray-50">
               <Th>{t("time")}</Th>
               <Th>{t("type")}</Th>
+              <Th>{t("reference")}</Th>
               <Th>{t("cashIn")}</Th>
               <Th>{t("cashOut")}</Th>
               <Th>{t("reasonNote")}</Th>
@@ -530,19 +537,44 @@ function MovementTable({ movements, cash, date, t }) {
           </thead>
           <tbody>
             {!movements.length ? (
-              <Empty cols="5" text={t("noCashMovements")} />
+              <tr className="h-11 border-t border-gray-200">
+                <Td>{date(openedAt)}</Td>
+                <Td>{t("cashOpening")}</Td>
+                <Td>-</Td>
+                <Td green>+{cash(openingCash)}</Td>
+                <Td>-</Td>
+                <Td>{t("openingFund")}</Td>
+              </tr>
             ) : (
-              movements.slice(0, 10).map((item) => (
-                <tr key={item.id} className="h-11 border-t border-gray-200">
-                  <Td>{date(item.created_at)}</Td>
-                  <Td>{t(item.movement_type)}</Td>
-                  <Td green>
-                    {item.direction === "IN" ? `+${cash(item.amount)}` : "-"}
-                  </Td>
-                  <Td>{item.direction === "OUT" ? cash(item.amount) : "-"}</Td>
-                  <Td>{item.note}</Td>
+              <>
+                {movements.map((item) => (
+                  <tr key={item.id} className="h-11 border-t border-gray-200">
+                    <Td>{date(item.created_at)}</Td>
+                    <Td>{t(item.movement_type)}</Td>
+                    <Td>{item.reference_label || "-"}</Td>
+                    <Td green>
+                      {item.direction === "IN" ? `+${cash(item.amount)}` : "-"}
+                    </Td>
+                    <Td>
+                      {item.direction === "OUT" ? cash(item.amount) : "-"}
+                    </Td>
+                    <Td>
+                      {item.note ||
+                        (item.movement_type === "SALE_PAYMENT"
+                          ? t("cashSalePayment")
+                          : "-")}
+                    </Td>
+                  </tr>
+                ))}
+                <tr className="h-11 border-t border-gray-200">
+                  <Td>{date(openedAt)}</Td>
+                  <Td>{t("cashOpening")}</Td>
+                  <Td>-</Td>
+                  <Td green>+{cash(openingCash)}</Td>
+                  <Td>-</Td>
+                  <Td>{t("openingFund")}</Td>
                 </tr>
-              ))
+              </>
             )}
           </tbody>
         </table>
@@ -592,7 +624,13 @@ function HistoryTable({ data, loading, cash, date, t, onView }) {
                     ? "-"
                     : cash(item.closing_difference)}
                 </Td>
-                <Td>{t(item.status)}</Td>
+                <Td>
+                  <StatusBadge
+                    tone={item.status === "open" ? "success" : "neutral"}
+                  >
+                    {t(item.status)}
+                  </StatusBadge>
+                </Td>
                 <Td>
                   <button
                     onClick={() => onView(item.id)}
@@ -631,6 +669,9 @@ function SessionDetail({ data, cash, date, t, onBack }) {
         <Info label={t("openedAt")} value={date(s.opened_at)} />
         <Info label={t("closedAt")} value={date(s.closed_at)} />
         <Info label={t("openingFund")} value={cash(s.opening_cash)} />
+        <Info label={t("cashSales")} value={cash(s.cash_sales_total)} />
+        <Info label={t("manualCashIn")} value={cash(s.manual_in_total)} />
+        <Info label={t("manualCashOut")} value={cash(s.manual_out_total)} />
         <Info label={t("theoreticalCash")} value={cash(s.expected_cash)} />
         <Info
           label={t("countedCash")}
@@ -647,6 +688,8 @@ function SessionDetail({ data, cash, date, t, onBack }) {
       <div className="p-5">
         <MovementTable
           movements={data.movements}
+          openingCash={s.opening_cash}
+          openedAt={s.opened_at}
           cash={cash}
           date={date}
           t={t}
@@ -691,13 +734,6 @@ function Line({ label, value, strong }) {
     >
       <span>{label}</span>
       <span>{value}</span>
-    </div>
-  );
-}
-function Error({ message }) {
-  return (
-    <div className="border-b border-red-200 bg-red-50 px-5 py-3 text-[12px] text-red-700">
-      {message}
     </div>
   );
 }

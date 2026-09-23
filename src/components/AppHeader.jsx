@@ -15,6 +15,9 @@ export default function AppHeader({
   onCashSessionClick,
   onHome,
   onLogout,
+  title,
+  subtitle,
+  appName,
 }) {
   const { t } = useLanguage();
   const userName =
@@ -31,14 +34,14 @@ export default function AppHeader({
       <div className="flex items-center gap-5">
         <img
           src={logo}
-          alt="POS Modern"
+          alt={appName || "MODERNA POS"}
           className="h-[48px] w-auto object-contain"
         />
         <div className="hidden h-7 w-px bg-gray-200 lg:block" />
         <div className="hidden lg:block">
-          <p className="text-[13px] font-semibold">{t("pointOfSale")}</p>
+          <p className="text-[13px] font-semibold">{title || appName || t("pointOfSale")}</p>
           <p className="mt-[2px] text-[11px] text-black/50">
-            {t("readyTransactions")}
+            {subtitle || t("readyTransactions")}
           </p>
         </div>
       </div>

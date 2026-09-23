@@ -1,2 +1,15 @@
-const API_URL="http://localhost:3000";function headers(){let token=null;try{token=JSON.parse(localStorage.getItem("pos_session"))?.token;}catch{token=null;}return{"Content-Type":"application/json",Authorization:`Bearer ${token}`};}async function request(path,options={}){const response=await fetch(`${API_URL}${path}`,{...options,headers:headers()}),data=await response.json();if(!response.ok)throw new Error(data.message||"Supplier request failed");return data;}const query=values=>new URLSearchParams(Object.entries(values).filter(([,value])=>value!==""&&value!=null));
-export const getSuppliers=filters=>request(`/api/suppliers?${query(filters)}`);export const getSupplier=id=>request(`/api/suppliers/${id}`).then(data=>data.supplier);export const createSupplier=body=>request("/api/suppliers",{method:"POST",body:JSON.stringify(body)}).then(data=>data.supplier);export const updateSupplier=(id,body)=>request(`/api/suppliers/${id}`,{method:"PUT",body:JSON.stringify(body)}).then(data=>data.supplier);export const setSupplierActive=(id,is_active)=>request(`/api/suppliers/${id}/status`,{method:"PATCH",body:JSON.stringify({is_active})}).then(data=>data.supplier);
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut, toQuery } from "./client";
+
+export const getSuppliers = (filters) =>
+  apiGet(`/api/suppliers?${toQuery(filters)}`);
+export const getSupplier = (id) =>
+  apiGet(`/api/suppliers/${id}`).then((data) => data.supplier);
+export const createSupplier = (body) =>
+  apiPost("/api/suppliers", body).then((data) => data.supplier);
+export const updateSupplier = (id, body) =>
+  apiPut(`/api/suppliers/${id}`, body).then((data) => data.supplier);
+export const setSupplierActive = (id, is_active) =>
+  apiPatch(`/api/suppliers/${id}/status`, { is_active }).then(
+    (data) => data.supplier,
+  );
+export const deleteSupplier = (id) => apiDelete(`/api/suppliers/${id}`);

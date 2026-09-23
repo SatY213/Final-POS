@@ -61,4 +61,15 @@ function setStatus(req, res) {
     return res.status(500).json({ message: "Failed to update unit status" });
   }
 }
-module.exports = { list, create, update, setStatus };
+function remove(req, res) {
+  try {
+    if (!["admin", "manager"].includes(req.user.role))
+      return res.status(403).json({ message: "Unit deletion requires manager access" });
+    const unit = Unit.remove(req.params.id);
+    return unit ? res.json({ deleted: true, unit }) : res.status(404).json({ message: "Unit not found" });
+  } catch (error) {
+    console.error("Delete unit error:", error);
+    return res.status(error.status || 500).json({ message: error.status ? error.message : "Failed to delete unit" });
+  }
+}
+module.exports = { list, create, update, setStatus, remove };

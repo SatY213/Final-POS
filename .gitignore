@@ -90,3 +90,6 @@ typings/
 
 # Electron-Forge
 out/
+build-demo/
+build-assets/
+build-runtime/

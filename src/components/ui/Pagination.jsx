@@ -1,0 +1,2 @@
+import{ChevronLeft,ChevronRight}from"lucide-react";
+export default function Pagination({page,totalPages,onPageChange}){return <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-3"><button disabled={page<=1} onClick={()=>onPageChange(page-1)} className="icon-button"><ChevronLeft size={15}/></button><span className="min-w-20 py-2 text-center text-[11px]">{page} / {totalPages||1}</span><button disabled={page>=totalPages} onClick={()=>onPageChange(page+1)} className="icon-button"><ChevronRight size={15}/></button></div>}

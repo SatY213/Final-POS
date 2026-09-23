@@ -1,16 +1,19 @@
 {
-  "name": "final pos",
-  "productName": "final pos",
+  "name": "pos-modern",
+  "productName": "POS Modern",
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {
     "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
+    "package": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make-installer.ps1 -PackageOnly",
+    "make": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make-installer.ps1",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "build": "vite build",
+    "test": "npm --prefix server test",
+    "lint": "node scripts/check-sources.js",
+    "i18n:check": "node scripts/audit-translations.js --check && node scripts/audit-server-errors.js --check"
   },
   "keywords": [],
   "author": {

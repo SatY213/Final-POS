@@ -10,6 +10,7 @@ const emptyForm = {
   password: "",
   role: "cashier",
   warehouse_id: "",
+  warehouse_ids: [],
   is_active: true,
 };
 
@@ -29,6 +30,7 @@ export default function UserForm({ user, warehouses, onSaved, onCancel }) {
             password: "",
             role: user.role || "cashier",
             warehouse_id: user.warehouse_id ? String(user.warehouse_id) : "",
+            warehouse_ids: (user.warehouse_ids || (user.warehouse_id ? [user.warehouse_id] : [])).map(String),
             is_active: Boolean(user.is_active),
           }
         : emptyForm,
@@ -61,6 +63,7 @@ export default function UserForm({ user, warehouses, onSaved, onCancel }) {
         name: form.name.trim(),
         username: form.username.trim(),
         warehouse_id: form.warehouse_id ? Number(form.warehouse_id) : null,
+        warehouse_ids: form.warehouse_ids.map(Number),
       };
       const saved = editing
         ? await updateUser(user.id, payload)
@@ -155,20 +158,18 @@ export default function UserForm({ user, warehouses, onSaved, onCancel }) {
           >
             {t("warehouse")}
           </label>
-          <select
-            id="warehouse_id"
-            name="warehouse_id"
-            value={form.warehouse_id}
-            onChange={change}
-            className="h-[42px] w-full border border-gray-400 bg-white px-3 text-[13px] outline-none"
-          >
-            <option value="">{t("allWarehouses")}</option>
-            {warehouses.map((warehouse) => (
-              <option key={warehouse.id} value={warehouse.id}>
+          <div className="grid gap-2 border border-gray-300 p-3 sm:grid-cols-2 lg:grid-cols-3">
+            {warehouses.map((warehouse) => {
+              const value = String(warehouse.id);
+              return <label key={warehouse.id} className="flex items-center gap-2 text-[12px] font-medium">
+                <input type="checkbox" checked={form.warehouse_ids.includes(value)} onChange={(event) => setForm((current) => {
+                  const warehouse_ids = event.target.checked ? [...current.warehouse_ids, value] : current.warehouse_ids.filter((id) => id !== value);
+                  return { ...current, warehouse_ids, warehouse_id: warehouse_ids[0] || "" };
+                })} />
                 {warehouse.name}
-              </option>
-            ))}
-          </select>
+              </label>;
+            })}
+          </div>
         </div>
         <label className="flex cursor-pointer items-center gap-3 border border-gray-300 bg-gray-50 p-4 lg:col-span-2">
           <input

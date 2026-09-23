@@ -17,20 +17,26 @@ function validateProduct(body, user, existing = null) {
       typeof body.reference === "string" && body.reference.trim()
         ? body.reference.trim()
         : null,
-    categoryId = Number(body.category_id);
+    categoryId = body.category_id == null || body.category_id === "" ? null : Number(body.category_id);
   if (!designation) return { error: "Product designation is required" };
-  if (!Number.isInteger(categoryId)) return { error: "Category is required" };
-  const category = Category.findById(categoryId);
+  const imageData = body.image_data === undefined
+    ? existing?.image_data || null
+    : body.image_data || null;
   if (
-    !category ||
-    (!category.is_active && existing?.category_id !== categoryId)
+    imageData &&
+    (!/^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=\r\n]+$/i.test(imageData) ||
+      Buffer.byteLength(imageData, "utf8") > 2_800_000)
   )
-    return { error: "Category must exist and be active" };
+    return { error: "Product image must be a PNG, JPEG or WebP file under 2 MB" };
+  if (categoryId !== null && !Number.isInteger(categoryId)) return { error: "Category is invalid" };
+  if (categoryId !== null) {
+    const category = Category.findById(categoryId);
+    if (!category || (!category.is_active && existing?.category_id !== categoryId))
+      return { error: "Category must exist and be active" };
+  }
   if (Product.referenceExists(reference, existing?.id))
     return { error: "Product reference already exists", status: 409 };
-  const tax = nonnegative(body.tax_rate ?? 0, "Tax rate"),
-    minimum = nonnegative(body.min_stock ?? 0, "Minimum stock");
-  if (tax.error) return tax;
+  const minimum = nonnegative(body.min_stock ?? 0, "Minimum stock");
   if (minimum.error) return minimum;
   for (const field of [
     "track_stock",
@@ -51,6 +57,8 @@ function validateProduct(body, user, existing = null) {
     };
   if (trackExpiration && !trackBatches)
     return { error: "Expiration tracking requires batch tracking" };
+  if (trackSerials && trackBatches)
+    return { error: "Serial and batch tracking cannot be combined" };
   if (
     existing &&
     existing.track_stock &&
@@ -182,6 +190,9 @@ function validateProduct(body, user, existing = null) {
         !productUnits[unitIndex]
       )
         return { error: quantity.error || "Initial stock package is invalid" };
+      // The form keeps one blank stock row ready for data entry. A zero quantity
+      // means "no initial stock" and must not create a zero-value stock movement.
+      if (quantity.value === 0) continue;
       if (!trackBatches && seen.has(warehouse))
         return { error: "A warehouse can only appear once in initial stock" };
       seen.add(warehouse);
@@ -190,6 +201,16 @@ function validateProduct(body, user, existing = null) {
         quantity: quantity.value,
         product_unit_index: unitIndex,
       };
+      if (trackSerials) {
+        const serialNumbers = (Array.isArray(row.serial_numbers) ? row.serial_numbers : String(row.serial_numbers || "").split(/[\n,;]+/))
+          .map(value => String(value).trim()).filter(Boolean);
+        const baseQuantity = quantity.value * productUnits[unitIndex].conversion_factor;
+        if (!Number.isInteger(baseQuantity) || serialNumbers.length !== baseQuantity)
+          return { error: "Each serialized stock unit requires one unique serial number" };
+        if (new Set(serialNumbers.map(value => value.toLocaleLowerCase())).size !== serialNumbers.length)
+          return { error: "Duplicate serial numbers are not allowed" };
+        item.serial_numbers = serialNumbers;
+      }
       if (trackBatches) {
         item.batch_number = String(row.batch_number || "").trim();
         item.expiration_date = String(row.expiration_date || "");
@@ -207,13 +228,18 @@ function validateProduct(body, user, existing = null) {
       }
       initialStock.push(item);
     }
+    if (trackSerials) {
+      const allSerials = initialStock.flatMap(row => row.serial_numbers || []);
+      if (new Set(allSerials.map(value => value.toLocaleLowerCase())).size !== allSerials.length)
+        return { error: "Serial numbers must be unique across all warehouses" };
+    }
   }
   return {
     value: {
       designation,
       reference,
+      image_data: imageData,
       category_id: categoryId,
-      tax_rate: tax.value,
       min_stock: minimum.value,
       track_stock: trackStock,
       track_batches: trackBatches,
@@ -244,13 +270,14 @@ function list(req, res) {
       return res
         .status(403)
         .json({ message: "Warehouse is inactive or unauthorized" });
-    const assigned = Number(req.user.warehouse_id),
-      warehouseId =
-        req.user.role === "admin"
-          ? requested
-          : allowed.has(assigned)
-            ? assigned
-            : -1,
+    const preferredWarehouse = Number(req.user?.warehouse_id),
+      warehouseId = requested || (
+        req.user?.role === "admin"
+          ? null
+          : allowed.has(preferredWarehouse)
+            ? preferredWarehouse
+            : -1
+      ),
       limit = [25, 50, 100].includes(Number(req.query.limit))
         ? Number(req.query.limit)
         : 25;
@@ -336,6 +363,19 @@ module.exports = {
       return res
         .status(500)
         .json({ message: "Failed to update product status" });
+    }
+  },
+  remove(req, res) {
+    try {
+      if (!["admin", "manager"].includes(req.user.role))
+        return res.status(403).json({ message: "Product deletion requires manager access" });
+      const product = Product.remove(req.params.id);
+      return product
+        ? res.json({ deleted: true, product })
+        : res.status(404).json({ message: "Product not found" });
+    } catch (error) {
+      console.error("Delete product error:", error);
+      return res.status(500).json({ message: "Failed to delete product" });
     }
   },
   warehouses(req, res) {

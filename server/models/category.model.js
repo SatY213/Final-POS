@@ -44,4 +44,11 @@ function setActive(id, isActive) {
     .run(isActive ? 1 : 0, id);
   return result.changes ? findById(id) : null;
 }
-module.exports = { findAll, findById, nameExists, create, update, setActive };
+const remove = db.transaction((id) => {
+  const current = findById(id);
+  if (!current) return null;
+  db.prepare("UPDATE products SET category_id=NULL WHERE category_id=?").run(id);
+  db.prepare("DELETE FROM categories WHERE id=?").run(id);
+  return current;
+});
+module.exports = { findAll, findById, nameExists, create, update, setActive, remove };

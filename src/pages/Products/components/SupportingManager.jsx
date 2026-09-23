@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Plus, Save, X } from "lucide-react";
+import { Plus, Save, Trash2, X } from "lucide-react";
 import {
   createCategory,
   createUnit,
+  deleteCategory,
+  deleteUnit,
   getCategories,
   getUnits,
   setCategoryActive,
@@ -11,6 +13,9 @@ import {
   updateUnit,
 } from "../../../api/product.model";
 import { useLanguage } from "../../../i18n/LanguageContext";
+import ErrorMessage from "../../../components/ui/ErrorMessage";
+import Modal from "../../../components/ui/Modal";
+import Button from "../../../components/ui/Button";
 
 export default function SupportingManager({ type, onDone, onChanged }) {
   const { t } = useLanguage();
@@ -22,6 +27,7 @@ export default function SupportingManager({ type, onDone, onChanged }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
   async function load() {
     try {
       setLoading(true);
@@ -87,6 +93,23 @@ export default function SupportingManager({ type, onDone, onChanged }) {
       setError(err.message);
     }
   }
+  async function remove() {
+    const item = deleteTarget;
+    if (!item) return;
+    try {
+      setSaving(true);
+      setError("");
+      isCategory ? await deleteCategory(item.id) : await deleteUnit(item.id);
+      if (editing?.id === item.id) reset();
+      await load();
+      await onChanged();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+      setDeleteTarget(null);
+    }
+  }
   return (
     <section className="border border-gray-300 bg-white">
       <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
@@ -107,14 +130,10 @@ export default function SupportingManager({ type, onDone, onChanged }) {
           {t("close")}
         </button>
       </div>
-      {error && (
-        <div className="border-b border-red-200 bg-red-50 px-5 py-3 text-[12px] text-red-700">
-          {error}
-        </div>
-      )}
+      <ErrorMessage message={error} onClose={() => setError("")} />
       <form
         onSubmit={save}
-        className="grid grid-cols-1 items-end gap-3 border-b border-gray-200 bg-gray-50 p-4 sm:grid-cols-[1fr_160px_auto]"
+        className={`grid grid-cols-1 items-end gap-3 border-b border-gray-200 bg-gray-50 p-4 ${isCategory ? "sm:grid-cols-[minmax(0,1fr)_auto]" : "sm:grid-cols-[minmax(0,1fr)_140px_auto]"}`}
       >
         <label>
           <span className="mb-2 block text-[11px] font-semibold">
@@ -138,12 +157,12 @@ export default function SupportingManager({ type, onDone, onChanged }) {
             />
           </label>
         )}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:min-w-max sm:flex-nowrap">
           {editing && (
             <button
               type="button"
               onClick={reset}
-              className="h-[40px] border border-gray-400 px-3 text-[12px] font-semibold"
+              className="h-[40px] whitespace-nowrap border border-gray-400 px-3 text-[12px] font-semibold"
             >
               {t("cancel")}
             </button>
@@ -151,7 +170,7 @@ export default function SupportingManager({ type, onDone, onChanged }) {
           <button
             type="submit"
             disabled={saving}
-            className="flex h-[40px] items-center gap-2 border border-[#087c1e] bg-[#099323] px-4 text-[12px] font-semibold text-white disabled:opacity-50"
+            className="flex h-[40px] items-center gap-2 whitespace-nowrap border border-[#087c1e] bg-[#099323] px-4 text-[12px] font-semibold text-white disabled:opacity-50"
           >
             {editing ? <Save size={15} /> : <Plus size={15} />}
             {saving
@@ -206,21 +225,32 @@ export default function SupportingManager({ type, onDone, onChanged }) {
                   <td className="px-4">
                     <Status active={item.is_active} t={t} />
                   </td>
-                  <td className="px-4 text-right rtl:text-left">
+                  <td className="whitespace-nowrap px-4 text-right rtl:text-left">
+                    <div className="inline-flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => startEdit(item)}
-                      className="me-2 h-[30px] border border-gray-400 px-3 text-[11px] font-semibold"
+                      className="inline-flex h-[30px] items-center justify-center border border-gray-400 px-3 text-[11px] font-semibold"
                     >
                       {t("edit")}
                     </button>
                     <button
                       type="button"
                       onClick={() => toggle(item)}
-                      className={`h-[30px] border px-3 text-[11px] font-semibold ${item.is_active ? "border-red-300 text-red-700" : "border-green-300 text-green-700"}`}
+                      className={`inline-flex h-[30px] items-center justify-center border px-3 text-[11px] font-semibold ${item.is_active ? "border-red-300 text-red-700" : "border-green-300 text-green-700"}`}
                     >
                       {t(item.is_active ? "deactivate" : "activate")}
                     </button>
+                    <button
+                      type="button"
+                      disabled={!isCategory && item.is_builtin}
+                      onClick={() => setDeleteTarget(item)}
+                      title={t("Supprimer définitivement")}
+                      className="inline-flex h-[30px] items-center justify-center border border-red-400 px-3 text-[11px] font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <Trash2 size={14}/>
+                    </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -228,6 +258,22 @@ export default function SupportingManager({ type, onDone, onChanged }) {
           </tbody>
         </table>
       </div>
+      <Modal
+        open={!!deleteTarget}
+        title={t("delete")}
+        onClose={() => !saving && setDeleteTarget(null)}
+        width="sm"
+        footer={<><Button onClick={() => setDeleteTarget(null)} disabled={saving}>{t("cancel")}</Button><Button variant="danger" onClick={remove} disabled={saving}>{saving ? t("saving") : t("delete")}</Button></>}
+      >
+        <div className="p-5 text-[13px]">
+          <p className="font-semibold">{t("Supprimer définitivement «")} {deleteTarget?.name} » ?</p>
+          <p className="mt-2 text-[12px] text-black/55">
+            {isCategory
+              ? t("Les produits conserveront leurs données et seront placés sans catégorie.")
+              : t("Une unité utilisée par un produit doit d’abord être retirée de ses conditionnements.")}
+          </p>
+        </div>
+      </Modal>
     </section>
   );
 }

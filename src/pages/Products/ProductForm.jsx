@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Package, Plus, Save, X } from "lucide-react";
+import { Package, Plus, Printer, Save, X } from "lucide-react";
 import {
   createCategory,
   createProduct,
@@ -7,15 +7,18 @@ import {
   updateProduct,
 } from "../../api/product.model";
 import { useLanguage } from "../../i18n/LanguageContext";
+import ErrorMessage from "../../components/ui/ErrorMessage";
 import InitialStockEditor from "./components/InitialStockEditor";
 import ProductUnitsEditor from "./components/ProductUnitsEditor";
+import SearchableSelect from "../../components/ui/SearchableSelect";
+import { getRuntimeSettings } from "../../utils/runtimeSettings";
 
 const emptyForm = {
   designation: "",
   reference: "",
+  image_data: null,
   category_id: "",
   description: "",
-  tax_rate: "0",
   min_stock: "0",
   track_stock: true,
   track_batches: false,
@@ -45,11 +48,12 @@ export default function ProductForm({
   onLookupsChanged,
   onSaved,
   onCancel,
+  onPrintLabel,
 }) {
   const { t } = useLanguage();
   const editing = Boolean(product);
+  const imagesEnabled = Boolean(getRuntimeSettings().product_images_enabled);
   const [form, setForm] = useState(emptyForm);
-  const [showInitialStock, setShowInitialStock] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -59,9 +63,9 @@ export default function ProductForm({
         ? {
             designation: product.designation || "",
             reference: product.reference || "",
+            image_data: product.image_data || null,
             category_id: String(product.category_id || ""),
             description: product.description || "",
-            tax_rate: String(product.tax_rate ?? 0),
             min_stock: String(product.min_stock ?? 0),
             track_stock: Boolean(product.track_stock),
             track_batches: Boolean(product.track_batches),
@@ -71,7 +75,10 @@ export default function ProductForm({
             product_units:
               product.product_units?.map((item) => ({
                 ...item,
-                unit_id: item.is_base && item.unit_is_builtin ? "" : String(item.unit_id),
+                unit_id:
+                  item.is_base && item.unit_is_builtin
+                    ? ""
+                    : String(item.unit_id),
                 conversion_factor: String(item.conversion_factor),
                 purchase_price: String(item.purchase_price),
                 selling_price: String(item.selling_price),
@@ -87,9 +94,9 @@ export default function ProductForm({
           }
         : emptyForm,
     );
-    setShowInitialStock(false);
     setError("");
   }, [product]);
+  useEffect(()=>{if(!editing&&form.track_stock&&!form.initial_stock.length&&activeWarehouseId)setForm(current=>({...current,initial_stock:[{warehouse_id:String(activeWarehouseId),product_unit_index:"0",quantity:"",batch_number:"",expiration_date:"",purchase_price:"",serial_numbers:[]}]}))},[editing,form.track_stock,form.initial_stock.length,activeWarehouseId]);
 
   function change(event) {
     const { name, value, type, checked } = event.target;
@@ -103,26 +110,37 @@ export default function ProductForm({
         next.track_expiration = false;
         next.track_serials = false;
         next.initial_stock = [];
-        setShowInitialStock(false);
       }
-      if (name === "track_batches" && checked) next.track_stock = true;
+      if (name === "track_batches" && checked) { next.track_stock = true; next.track_serials = false; }
       if (name === "track_batches" && !checked) next.track_expiration = false;
       if (name === "track_expiration" && checked) {
         next.track_stock = true;
         next.track_batches = true;
       }
-      if (name === "track_serials" && checked) next.track_stock = true;
-      if (["track_batches", "track_expiration"].includes(name))
-        next.initial_stock = [];
+      if (name === "track_serials" && checked) { next.track_stock = true; next.track_batches = false; next.track_expiration = false; }
+      if (["track_batches", "track_expiration", "track_serials"].includes(name))
+        next.initial_stock = [{warehouse_id:String(activeWarehouseId||""),product_unit_index:"0",quantity:"",batch_number:"",expiration_date:"",purchase_price:"",serial_numbers:[]}];
       return next;
     });
+  }
+
+  function changeImage(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type) || file.size > 2 * 1024 * 1024) {
+      setError(t("productImageError"));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setForm((current) => ({ ...current, image_data: reader.result }));
+    reader.onerror = () => setError(t("productImageError"));
+    reader.readAsDataURL(file);
   }
 
   async function submit(event) {
     event.preventDefault();
     if (
       !form.designation.trim() ||
-      !form.category_id ||
       form.product_units.some((item) => !item.is_base && !item.unit_id)
     ) {
       setError(t("productRequiredError"));
@@ -151,19 +169,19 @@ export default function ProductForm({
       setError("");
       const payload = {
         ...form,
-        category_id: Number(form.category_id),
-        tax_rate: Number(form.tax_rate),
+        category_id: form.category_id ? Number(form.category_id) : null,
         min_stock: Number(form.min_stock),
         product_units: productUnits,
         initial_stock: editing
           ? []
-          : form.initial_stock.map((row) => ({
+          : form.initial_stock.filter((row) => Number(row.quantity) > 0).map((row) => ({
               ...row,
               warehouse_id: Number(row.warehouse_id),
               product_unit_index: Number(row.product_unit_index || 0),
               quantity: Number(row.quantity),
               purchase_price:
                 row.purchase_price === "" ? null : Number(row.purchase_price),
+              serial_numbers: Array.isArray(row.serial_numbers) ? row.serial_numbers : [],
             })),
       };
       const saved = editing
@@ -213,11 +231,7 @@ export default function ProductForm({
           <X size={18} />
         </button>
       </div>
-      {error && (
-        <div className="border-b border-red-200 bg-red-50 px-5 py-3 text-[13px] font-medium text-red-700">
-          {error}
-        </div>
-      )}
+      <ErrorMessage message={error} onClose={() => setError("")} />
       <div className="space-y-6 p-5">
         <FormSection title={t("generalInformation")}>
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -234,31 +248,21 @@ export default function ProductForm({
               value={form.reference}
               onChange={change}
             />
-            <SelectWithAdd
-              label={t("category")}
-              name="category_id"
-              value={form.category_id}
-              onChange={change}
-              options={activeCategories}
-              onCreated={async (name) => {
-                const item = await createCategory({ name });
-                await onLookupsChanged();
-                setForm((current) => ({
-                  ...current,
-                  category_id: String(item.id),
-                }));
-              }}
-              addLabel={t("newCategory")}
-            />
-            <Field
-              label={t("taxRate")}
-              name="tax_rate"
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.tax_rate}
-              onChange={change}
-            />
+            <CategoryField label={t("category")} value={form.category_id} options={activeCategories} onChange={value=>setForm(current=>({...current,category_id:value}))} onCreated={async name=>{const item=await createCategory({name});await onLookupsChanged();setForm(current=>({...current,category_id:String(item.id)}))}} addLabel={t("newCategory")} />
+            {imagesEnabled && (
+              <div className="border border-gray-300 p-3 lg:row-span-2">
+                <span className="mb-2 block text-[12px] font-semibold">{t("productImage")}</span>
+                {form.image_data && <img src={form.image_data} alt="" className="mb-3 h-28 w-full object-contain" />}
+                <div className="flex gap-2">
+                  <label className="inline-flex h-9 cursor-pointer items-center border border-gray-400 px-3 text-[11px] font-semibold">
+                    {t("chooseImage")}
+                    <input hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={changeImage} />
+                  </label>
+                  {form.image_data && <button type="button" onClick={() => setForm((current) => ({ ...current, image_data: null }))} className="h-9 border border-red-300 px-3 text-[11px] font-semibold text-red-700">{t("removeImage")}</button>}
+                </div>
+                <p className="mt-2 text-[10px] text-black/45">{t("PNG, JPEG ou WebP · 2 Mo max.")}</p>
+              </div>
+            )}
             <label className="lg:col-span-2">
               <span className="mb-2 block text-[12px] font-semibold">
                 {t("description")}
@@ -322,18 +326,7 @@ export default function ProductForm({
             />
           </div>
         </FormSection>
-        {!editing &&
-          form.track_stock &&
-          (!showInitialStock ? (
-            <button
-              type="button"
-              onClick={() => setShowInitialStock(true)}
-              className="flex h-[42px] items-center gap-2 border border-gray-400 px-4 text-[13px] font-semibold"
-            >
-              <Plus size={17} />
-              {t("addInitialStock")}
-            </button>
-          ) : (
+        {!editing && form.track_stock && (
             <InitialStockEditor
               rows={form.initial_stock}
               onChange={(initial_stock) =>
@@ -343,10 +336,12 @@ export default function ProductForm({
               activeWarehouseId={activeWarehouseId}
               trackBatches={form.track_batches}
               trackExpiration={form.track_expiration}
+              trackSerials={form.track_serials}
               productUnits={form.product_units}
               units={units}
             />
-          ))}
+          )}
+        {editing&&form.track_stock&&<CurrentStock rows={product.stock_by_warehouse||[]} trackSerials={form.track_serials}/>}
         <label className="flex items-center gap-3 border-t border-gray-200 pt-5">
           <input
             type="checkbox"
@@ -366,6 +361,7 @@ export default function ProductForm({
         </label>
       </div>
       <div className="flex justify-end gap-3 border-t border-gray-200 px-5 py-4">
+        {editing&&<button type="button" onClick={onPrintLabel} disabled={saving || !(product?.barcodes || []).length} title={(product?.barcodes || []).length ? t("Imprimer étiquette") : t("Aucun code-barres")} className="flex h-[42px] items-center gap-2 border border-gray-400 px-4 text-[13px] font-semibold disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-black/30 disabled:opacity-60"><Printer size={17}/>{t("Imprimer étiquette")}</button>}
         <button
           type="button"
           onClick={onCancel}
@@ -395,6 +391,7 @@ function FormSection({ title, children }) {
     </section>
   );
 }
+function CurrentStock({rows,trackSerials}){const { t } = useLanguage();const total=rows.reduce((sum,row)=>sum+Number(row.quantity||0),0);return <section className="border border-gray-300"><div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3"><div><h3 className="text-[14px] font-bold">{t("stockStatus")}</h3><p className="mt-1 text-[11px] text-black/50">{t("Information en lecture seule. Les corrections se font depuis Stock.")}</p></div><b className="text-[18px] text-[#087c1e]">{total} {t("unité(s)")}</b></div><div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">{rows.map(row=><div key={row.warehouse_id} className="border border-gray-200 p-3"><span className="text-[11px] text-black/50">{row.warehouse_name}</span><b className="mt-1 block text-[16px]">{row.quantity} {t("unité(s)")}</b>{trackSerials&&<small className="text-[#087c1e]">{row.available_serials} {t("série(s) disponible(s)")}</small>}</div>)}{!rows.length&&<p className="text-[12px] text-black/45">{t("Aucun stock enregistré.")}</p>}</div></section>}
 function Field({ label, required, ...props }) {
   return (
     <label>
@@ -425,6 +422,7 @@ function Toggle({ label, description, ...props }) {
     </label>
   );
 }
+function CategoryField({label,value,onChange,options,onCreated,addLabel}){const { t } = useLanguage();const[adding,setAdding]=useState(false),[name,setName]=useState(""),[error,setError]=useState("");async function add(){if(!name.trim())return;try{setError("");await onCreated(name.trim());setName("");setAdding(false)}catch(e){setError(e.message)}}return <div><div className="mb-2 flex items-center justify-between"><span className="text-[12px] font-semibold">{label} <span className="font-normal text-black/40">{t("(facultatif)")}</span></span><button type="button" onClick={()=>setAdding(v=>!v)} className="text-[11px] font-semibold text-[#087c1e]">+ {addLabel}</button></div><SearchableSelect value={value} onChange={onChange} options={options} placeholder={t("Sans catégorie")} searchPlaceholder={t("Rechercher une catégorie...")}/>{adding&&<div className="mt-2 flex gap-2"><input value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();add()}}} placeholder={label} className="h-9 min-w-0 flex-1 border border-gray-400 px-2 text-[12px] outline-none"/><button type="button" onClick={add} className="h-9 border border-[#087c1e] bg-[#099323] px-3 text-[11px] font-semibold text-white">{t("Ajouter")}</button></div>}{error&&<p className="mt-1 text-[11px] text-red-700">{error}</p>}</div>}
 function SelectWithAdd({
   label,
   options,
@@ -504,7 +502,7 @@ function SelectWithAdd({
           </button>
         </div>
       )}
-      {error && <p className="mt-1 text-[11px] text-red-700">{error}</p>}
+      <ErrorMessage message={error} onClose={() => setError("")} />
     </div>
   );
 }

@@ -1,6 +1,99 @@
-const Supplier=require("../models/supplier.model");
-const canManage=user=>["admin","manager"].includes(user.role);
-function text(value){return typeof value==="string"&&value.trim()?value.trim():null;}
-function validate(body){const name=text(body.name);if(!name)return{error:"Supplier name is required"};const openingBalance=Number(body.opening_balance??0);if(!Number.isFinite(openingBalance))return{error:"Opening balance must be a valid number"};if(body.is_active!==undefined&&typeof body.is_active!=="boolean"&&![0,1].includes(body.is_active))return{error:"Supplier status is invalid"};return{value:{name,phone:text(body.phone),email:text(body.email),nif:text(body.nif),nis:text(body.nis),tax_article:text(body.tax_article),commercial_register:text(body.commercial_register),address:text(body.address),business_activity:text(body.business_activity),opening_balance:openingBalance,is_active:body.is_active!==false&&body.is_active!==0}};}
-function forbidden(req,res){if(canManage(req.user))return false;res.status(403).json({message:"Only administrators and managers can manage suppliers"});return true;}
-module.exports={list(req,res){try{const limit=[25,50,100].includes(Number(req.query.limit))?Number(req.query.limit):25;return res.json(Supplier.findPage({page:Math.max(1,Number(req.query.page)||1),limit,search:String(req.query.search||"").trim(),status:["active","inactive","all"].includes(req.query.status)?req.query.status:"active"}));}catch(error){console.error(error);return res.status(500).json({message:"Failed to load suppliers"});}},getById(req,res){try{const supplier=Supplier.findById(req.params.id);return supplier?res.json({supplier}):res.status(404).json({message:"Supplier not found"});}catch(error){return res.status(500).json({message:"Failed to load supplier"});}},create(req,res){if(forbidden(req,res))return;const result=validate(req.body);if(result.error)return res.status(400).json({message:result.error});try{return res.status(201).json({supplier:Supplier.create(result.value)});}catch(error){return res.status(500).json({message:"Failed to create supplier"});}},update(req,res){if(forbidden(req,res))return;if(!Supplier.findById(req.params.id))return res.status(404).json({message:"Supplier not found"});const result=validate(req.body);if(result.error)return res.status(400).json({message:result.error});try{return res.json({supplier:Supplier.update(req.params.id,result.value)});}catch(error){return res.status(500).json({message:"Failed to update supplier"});}},setStatus(req,res){if(forbidden(req,res))return;if(typeof req.body.is_active!=="boolean")return res.status(400).json({message:"Supplier status must be a boolean"});try{const supplier=Supplier.setActive(req.params.id,req.body.is_active);return supplier?res.json({supplier}):res.status(404).json({message:"Supplier not found"});}catch(error){return res.status(500).json({message:"Failed to update supplier status"});}}};
+const Supplier = require("../models/supplier.model");
+const { validatePartner, canManagePartners } = require("../utils/partner");
+const { parsePagination } = require("../utils/request");
+
+const validate = (body) => validatePartner(body, "Supplier");
+function forbidden(req, res) {
+  if (canManagePartners(req.user)) return false;
+  res
+    .status(403)
+    .json({ message: "Only administrators and managers can manage suppliers" });
+  return true;
+}
+
+module.exports = {
+  list(req, res) {
+    try {
+      const { page, limit } = parsePagination(req.query);
+      return res.json(
+        Supplier.findPage({
+          page,
+          limit,
+          search: String(req.query.search || "").trim(),
+          status: ["active", "inactive", "all"].includes(req.query.status)
+            ? req.query.status
+            : "active",
+        }),
+      );
+    } catch (error) {
+      console.error("Load suppliers error:", error);
+      return res.status(500).json({ message: "Failed to load suppliers" });
+    }
+  },
+  getById(req, res) {
+    try {
+      const supplier = Supplier.findById(req.params.id);
+      return supplier
+        ? res.json({ supplier })
+        : res.status(404).json({ message: "Supplier not found" });
+    } catch (error) {
+      console.error("Load supplier error:", error);
+      return res.status(500).json({ message: "Failed to load supplier" });
+    }
+  },
+  create(req, res) {
+    if (forbidden(req, res)) return;
+    const result = validate(req.body);
+    if (result.error) return res.status(400).json({ message: result.error });
+    try {
+      return res.status(201).json({ supplier: Supplier.create(result.value) });
+    } catch (error) {
+      console.error("Create supplier error:", error);
+      return res.status(500).json({ message: "Failed to create supplier" });
+    }
+  },
+  update(req, res) {
+    if (forbidden(req, res)) return;
+    if (!Supplier.findById(req.params.id))
+      return res.status(404).json({ message: "Supplier not found" });
+    const result = validate(req.body);
+    if (result.error) return res.status(400).json({ message: result.error });
+    try {
+      return res.json({ supplier: Supplier.update(req.params.id, result.value) });
+    } catch (error) {
+      console.error("Update supplier error:", error);
+      return res.status(500).json({ message: "Failed to update supplier" });
+    }
+  },
+  setStatus(req, res) {
+    if (forbidden(req, res)) return;
+    if (typeof req.body.is_active !== "boolean")
+      return res
+        .status(400)
+        .json({ message: "Supplier status must be a boolean" });
+    try {
+      const supplier = Supplier.setActive(req.params.id, req.body.is_active);
+      return supplier
+        ? res.json({ supplier })
+        : res.status(404).json({ message: "Supplier not found" });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Failed to update supplier status" });
+    }
+  },
+  remove(req, res) {
+    if (forbidden(req, res)) return;
+    try {
+      const supplier = Supplier.remove(req.params.id);
+      return supplier
+        ? res.json({ deleted: true, supplier })
+        : res.status(404).json({ message: "Supplier not found" });
+    } catch (error) {
+      if (error instanceof Supplier.SupplierInUseError)
+        return res.status(409).json({ message: error.message, uses: error.uses });
+      console.error("Delete supplier error:", error);
+      return res.status(500).json({ message: "Failed to delete supplier" });
+    }
+  },
+};

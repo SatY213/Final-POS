@@ -1,27 +1,2 @@
-const API_URL = "http://localhost:3000";
-
-function headers() {
-  let token = null;
-  try { token = JSON.parse(localStorage.getItem("pos_session"))?.token || null; } catch { token = null; }
-  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
-}
-async function request(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, { ...options, headers: headers() });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || "Product request failed");
-  return data;
-}
-export async function getProducts(filters = {}) { const query = new URLSearchParams(Object.entries(filters).filter(([, value]) => value !== "" && value !== null && value !== undefined)); return request(`/api/products?${query}`); }
-export async function getProduct(id) { return (await request(`/api/products/${id}`)).product; }
-export async function createProduct(data) { return (await request("/api/products", { method: "POST", body: JSON.stringify(data) })).product; }
-export async function updateProduct(id, data) { return (await request(`/api/products/${id}`, { method: "PUT", body: JSON.stringify(data) })).product; }
-export async function setProductActive(id, isActive) { return (await request(`/api/products/${id}/status`, { method: "PATCH", body: JSON.stringify({ is_active: isActive }) })).product; }
-export async function getProductWarehouses() { return (await request("/api/products/warehouses")).warehouses; }
-export async function getCategories() { return (await request("/api/categories")).categories; }
-export async function createCategory(data) { return (await request("/api/categories", { method: "POST", body: JSON.stringify(data) })).category; }
-export async function updateCategory(id, data) { return (await request(`/api/categories/${id}`, { method: "PUT", body: JSON.stringify(data) })).category; }
-export async function setCategoryActive(id, isActive) { return (await request(`/api/categories/${id}/status`, { method: "PATCH", body: JSON.stringify({ is_active: isActive }) })).category; }
-export async function getUnits() { return (await request("/api/units")).units; }
-export async function createUnit(data) { return (await request("/api/units", { method: "POST", body: JSON.stringify(data) })).unit; }
-export async function updateUnit(id, data) { return (await request(`/api/units/${id}`, { method: "PUT", body: JSON.stringify(data) })).unit; }
-export async function setUnitActive(id, isActive) { return (await request(`/api/units/${id}/status`, { method: "PATCH", body: JSON.stringify({ is_active: isActive }) })).unit; }
+import{apiDelete,apiGet,apiPatch,apiPost,apiPut,toQuery}from"./client";
+export const getProducts=(filters={})=>apiGet(`/api/products?${toQuery(filters)}`);export const getProduct=id=>apiGet(`/api/products/${id}`).then(data=>data.product);export const createProduct=body=>apiPost("/api/products",body).then(data=>data.product);export const updateProduct=(id,body)=>apiPut(`/api/products/${id}`,body).then(data=>data.product);export const deleteProduct=id=>apiDelete(`/api/products/${id}`);export const setProductActive=(id,is_active)=>apiPatch(`/api/products/${id}/status`,{is_active}).then(data=>data.product);export const getProductWarehouses=()=>apiGet("/api/products/warehouses").then(data=>data.warehouses);export const getCategories=()=>apiGet("/api/categories").then(data=>data.categories);export const createCategory=body=>apiPost("/api/categories",body).then(data=>data.category);export const updateCategory=(id,body)=>apiPut(`/api/categories/${id}`,body).then(data=>data.category);export const deleteCategory=id=>apiDelete(`/api/categories/${id}`);export const setCategoryActive=(id,is_active)=>apiPatch(`/api/categories/${id}/status`,{is_active}).then(data=>data.category);export const getUnits=()=>apiGet("/api/units").then(data=>data.units);export const createUnit=body=>apiPost("/api/units",body).then(data=>data.unit);export const updateUnit=(id,body)=>apiPut(`/api/units/${id}`,body).then(data=>data.unit);export const deleteUnit=id=>apiDelete(`/api/units/${id}`);export const setUnitActive=(id,is_active)=>apiPatch(`/api/units/${id}/status`,{is_active}).then(data=>data.unit);

@@ -1,0 +1,12 @@
+const router = require("express").Router();
+const controller = require("../controllers/invoice.controller");
+const auth = require("../middleware/auth.middleware");
+router.use(auth);
+router.get("/context", controller.context);
+router.get("/eligible-sales", controller.eligibleSales);
+router.get("/", controller.list);
+router.post("/", controller.create);
+router.get("/:id", controller.detail);
+router.put("/:id", controller.update);
+router.post("/:id/payments", controller.addPayment);
+module.exports = router;

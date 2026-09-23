@@ -23,32 +23,43 @@ function findByUsername(username) {
     .get(username);
 }
 function findById(id) {
-  return db.prepare(`${selectFields} WHERE users.id = ?`).get(id);
+  return withWarehouses(db.prepare(`${selectFields} WHERE users.id = ?`).get(id));
 }
 function findAll() {
-  return db.prepare(`${selectFields} ORDER BY users.name ASC`).all();
+  return db.prepare(`${selectFields} ORDER BY users.name ASC`).all().map(withWarehouses);
+}
+function withWarehouses(user) {
+  if (!user) return user;
+  user.warehouse_ids = db.prepare("SELECT warehouse_id FROM user_warehouses WHERE user_id=? ORDER BY warehouse_id").all(user.id).map((row) => row.warehouse_id);
+  return user;
+}
+function saveWarehouses(userId, warehouseIds = []) {
+  db.prepare("DELETE FROM user_warehouses WHERE user_id=?").run(userId);
+  const insert = db.prepare("INSERT INTO user_warehouses(user_id,warehouse_id) VALUES(?,?)");
+  warehouseIds.forEach((warehouseId) => insert.run(userId, warehouseId));
 }
 
-function create({
+const create = db.transaction(({
   name,
   username,
   password_hash,
   role,
   warehouse_id,
-  is_active,
-}) {
+  is_active, warehouse_ids = [],
+}) => {
   const result = db
     .prepare(
       `INSERT INTO users (name, username, password_hash, role, warehouse_id, is_active) VALUES (?, ?, ?, ?, ?, ?)`,
     )
     .run(name, username, password_hash, role, warehouse_id, is_active ? 1 : 0);
+  saveWarehouses(result.lastInsertRowid, warehouse_ids);
   return findById(result.lastInsertRowid);
-}
+});
 
-function update(
+const update = db.transaction((
   id,
-  { name, username, password_hash, role, warehouse_id, is_active },
-) {
+  { name, username, password_hash, role, warehouse_id, warehouse_ids = [], is_active },
+) => {
   const passwordSql = password_hash ? ", password_hash = @password_hash" : "";
   const result = db
     .prepare(
@@ -63,8 +74,9 @@ function update(
       warehouse_id,
       is_active: is_active ? 1 : 0,
     });
+  if (result.changes) saveWarehouses(id, warehouse_ids);
   return result.changes ? findById(id) : null;
-}
+});
 
 function usernameExists(username, excludedId = null) {
   const sql = excludedId

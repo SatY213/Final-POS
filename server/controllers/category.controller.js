@@ -55,4 +55,15 @@ function setStatus(req, res) {
       .json({ message: "Failed to update category status" });
   }
 }
-module.exports = { list, create, update, setStatus };
+function remove(req, res) {
+  try {
+    if (!["admin", "manager"].includes(req.user.role))
+      return res.status(403).json({ message: "Category deletion requires manager access" });
+    const category = Category.remove(req.params.id);
+    return category ? res.json({ deleted: true, category }) : res.status(404).json({ message: "Category not found" });
+  } catch (error) {
+    console.error("Delete category error:", error);
+    return res.status(500).json({ message: "Failed to delete category" });
+  }
+}
+module.exports = { list, create, update, setStatus, remove };

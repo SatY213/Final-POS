@@ -1,16 +1,225 @@
 const db = require("../config/database");
-const roundMoney = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
-const selectFields = `SELECT cs.id,cs.cash_register_id,cs.user_id,cs.opening_cash,cs.opened_at,cs.closing_cash,cs.closed_at,cs.status,cs.expected_cash_at_close,cs.closing_difference,cs.closing_note,cr.name cash_register_name,cr.code cash_register_code,cr.warehouse_id,w.name warehouse_name,u.name user_name,u.username,COALESCE(SUM(CASE WHEN cm.direction='IN' THEN cm.amount ELSE 0 END),0) manual_in_total,COALESCE(SUM(CASE WHEN cm.direction='OUT' THEN cm.amount ELSE 0 END),0) manual_out_total FROM cash_sessions cs JOIN cash_registers cr ON cr.id=cs.cash_register_id JOIN warehouses w ON w.id=cr.warehouse_id JOIN users u ON u.id=cs.user_id LEFT JOIN cash_movements cm ON cm.cash_session_id=cs.id`;
+const Settings = require("../services/settings.service");
+const roundMoney = (value) =>
+  Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+const selectFields = `SELECT cs.id,cs.cash_register_id,cs.user_id,cs.opening_cash,cs.opened_at,cs.closing_cash,cs.closed_at,cs.status,cs.expected_cash_at_close,cs.closing_difference,cs.closing_note,cr.name cash_register_name,cr.code cash_register_code,cr.warehouse_id,w.name warehouse_name,u.name user_name,u.username,
+COALESCE(SUM(CASE WHEN cm.movement_type='SALE_PAYMENT' AND cm.direction='IN' THEN cm.amount ELSE 0 END),0) cash_sales_total,
+COALESCE(SUM(CASE WHEN cm.movement_type='MANUAL_CASH_IN' AND cm.direction='IN' THEN cm.amount ELSE 0 END),0) manual_in_total,
+COALESCE(SUM(CASE WHEN cm.movement_type='MANUAL_CASH_OUT' AND cm.direction='OUT' THEN cm.amount ELSE 0 END),0) manual_out_total,
+COALESCE(SUM(CASE WHEN cm.direction='IN' THEN cm.amount ELSE 0 END),0) cash_in_total,
+COALESCE(SUM(CASE WHEN cm.direction='OUT' THEN cm.amount ELSE 0 END),0) cash_out_total
+FROM cash_sessions cs JOIN cash_registers cr ON cr.id=cs.cash_register_id JOIN warehouses w ON w.id=cr.warehouse_id JOIN users u ON u.id=cs.user_id LEFT JOIN cash_movements cm ON cm.cash_session_id=cs.id`;
 const groupBy = " GROUP BY cs.id ";
-function hydrate(row){if(!row)return null;row.manual_in_total=roundMoney(row.manual_in_total);row.manual_out_total=roundMoney(row.manual_out_total);row.expected_cash=row.status==="closed"&&row.expected_cash_at_close!=null?roundMoney(row.expected_cash_at_close):roundMoney(row.opening_cash+row.manual_in_total-row.manual_out_total);return row;}
-function findById(id){return hydrate(db.prepare(`${selectFields} WHERE cs.id=? ${groupBy}`).get(id));}
-function findOpenByUser(userId){return hydrate(db.prepare(`${selectFields} WHERE cs.user_id=? AND cs.status='open' ${groupBy}`).get(userId));}
-function calculateExpectedCash(id){const row=db.prepare(`SELECT cs.opening_cash+COALESCE(SUM(CASE WHEN cm.direction='IN' THEN cm.amount ELSE -cm.amount END),0) expected_cash FROM cash_sessions cs LEFT JOIN cash_movements cm ON cm.cash_session_id=cs.id WHERE cs.id=? GROUP BY cs.id`).get(id);return row?roundMoney(row.expected_cash):null;}
-function findRegisterById(id){return db.prepare(`SELECT cr.id,cr.warehouse_id,cr.name,cr.is_active,w.is_active warehouse_is_active FROM cash_registers cr JOIN warehouses w ON w.id=cr.warehouse_id WHERE cr.id=?`).get(id);}
-function findAvailableRegisters(user,warehouseId){const params={warehouse_id:user.role==="admin"?Number(warehouseId):Number(user.warehouse_id)};return db.prepare(`SELECT cr.id,cr.warehouse_id,cr.name,cr.code,w.name warehouse_name FROM cash_registers cr JOIN warehouses w ON w.id=cr.warehouse_id LEFT JOIN cash_sessions cs ON cs.cash_register_id=cr.id AND cs.status='open' WHERE cr.is_active=1 AND w.is_active=1 AND cs.id IS NULL AND cr.warehouse_id=@warehouse_id ORDER BY cr.name COLLATE NOCASE`).all(params);}
-const openTransaction=db.transaction((cashRegisterId,userId,openingCash)=>{if(findOpenByUser(userId))throw Object.assign(new Error("User already has an open cash session"),{code:"OPEN_USER_SESSION"});if(db.prepare("SELECT 1 FROM cash_sessions WHERE cash_register_id=? AND status='open'").get(cashRegisterId))throw Object.assign(new Error("Cash register already has an open session"),{code:"OPEN_REGISTER_SESSION"});const id=db.prepare("INSERT INTO cash_sessions(cash_register_id,user_id,opening_cash) VALUES(?,?,?)").run(cashRegisterId,userId,roundMoney(openingCash)).lastInsertRowid;return findById(id);});
-const movementTransaction=db.transaction((sessionId,userId,direction,amount,note)=>{const session=findById(sessionId);if(!session||session.status!=="open")throw Object.assign(new Error("Cash session is not open"),{code:"SESSION_NOT_OPEN"});if(Number(session.user_id)!==Number(userId))throw Object.assign(new Error("You cannot modify another user's cash session"),{code:"SESSION_FORBIDDEN"});const value=roundMoney(amount);if(direction==="OUT"&&value>calculateExpectedCash(sessionId))throw Object.assign(new Error("Cash out amount exceeds theoretical cash"),{code:"INSUFFICIENT_CASH"});db.prepare("INSERT INTO cash_movements(cash_session_id,direction,movement_type,amount,note,created_by) VALUES(?,?,?,?,?,?)").run(sessionId,direction,direction==="IN"?"MANUAL_CASH_IN":"MANUAL_CASH_OUT",value,note,userId);return findById(sessionId);});
-const closeTransaction=db.transaction((id,userId,closingCash,note)=>{const session=findById(id);if(!session||session.status!=="open")return null;if(Number(session.user_id)!==Number(userId))throw Object.assign(new Error("You cannot close another user's cash session"),{code:"SESSION_FORBIDDEN"});const expected=calculateExpectedCash(id),counted=roundMoney(closingCash);db.prepare("UPDATE cash_sessions SET closing_cash=?,expected_cash_at_close=?,closing_difference=?,closing_note=?,closed_at=CURRENT_TIMESTAMP,status='closed' WHERE id=? AND status='open'").run(counted,expected,roundMoney(counted-expected),note||null,id);return findById(id);});
-function listMovements(sessionId){return db.prepare(`SELECT cm.*,u.name created_by_name FROM cash_movements cm JOIN users u ON u.id=cm.created_by WHERE cm.cash_session_id=? ORDER BY cm.created_at DESC,cm.id DESC`).all(sessionId);}
-function list(filters,user){const params={limit:filters.limit,offset:(filters.page-1)*filters.limit},conditions=[];if(user.role==="cashier"){conditions.push("cs.user_id=@access_user");params.access_user=user.id;}else if(user.role!=="admin"){conditions.push("cr.warehouse_id=@access_warehouse");params.access_warehouse=user.warehouse_id;}if(filters.date){conditions.push("date(cs.opened_at)=@date");params.date=filters.date;}if(filters.registerId){conditions.push("cs.cash_register_id=@register_id");params.register_id=filters.registerId;}if(filters.userId){conditions.push("cs.user_id=@user_id");params.user_id=filters.userId;}if(filters.status){conditions.push("cs.status=@status");params.status=filters.status;}const where=conditions.length?`WHERE ${conditions.join(" AND ")}`:"",sessions=db.prepare(`${selectFields} ${where} ${groupBy} ORDER BY cs.opened_at DESC LIMIT @limit OFFSET @offset`).all(params).map(hydrate),countParams={...params};delete countParams.limit;delete countParams.offset;const total=db.prepare(`SELECT COUNT(*) count FROM cash_sessions cs JOIN cash_registers cr ON cr.id=cs.cash_register_id ${where}`).get(countParams).count;return{cash_sessions:sessions,pagination:{page:filters.page,limit:filters.limit,total,total_pages:Math.max(1,Math.ceil(total/filters.limit))}};}
-module.exports={roundMoney,findById,findOpenByUser,calculateExpectedCash,findRegisterById,findAvailableRegisters,open:openTransaction,createMovement:movementTransaction,close:closeTransaction,listMovements,list};
+function hydrate(row) {
+  if (!row) return null;
+  for (const field of [
+    "cash_sales_total",
+    "manual_in_total",
+    "manual_out_total",
+    "cash_in_total",
+    "cash_out_total",
+  ])
+    row[field] = roundMoney(row[field]);
+  row.expected_cash =
+    row.status === "closed" && row.expected_cash_at_close != null
+      ? roundMoney(row.expected_cash_at_close)
+      : roundMoney(row.opening_cash + row.cash_in_total - row.cash_out_total);
+  return row;
+}
+function findById(id) {
+  return hydrate(
+    db.prepare(`${selectFields} WHERE cs.id=? ${groupBy}`).get(id),
+  );
+}
+function findOpenByUser(userId) {
+  return hydrate(
+    db
+      .prepare(
+        `${selectFields} WHERE cs.user_id=? AND cs.status='open' ${groupBy}`,
+      )
+      .get(userId),
+  );
+}
+function calculateExpectedCash(id) {
+  const row = db
+    .prepare(
+      `SELECT cs.opening_cash+COALESCE(SUM(CASE WHEN cm.direction='IN' THEN cm.amount ELSE -cm.amount END),0) expected_cash FROM cash_sessions cs LEFT JOIN cash_movements cm ON cm.cash_session_id=cs.id WHERE cs.id=? GROUP BY cs.id`,
+    )
+    .get(id);
+  return row ? roundMoney(row.expected_cash) : null;
+}
+function findRegisterById(id) {
+  return db
+    .prepare(
+      `SELECT cr.id,cr.warehouse_id,cr.name,cr.is_active,w.is_active warehouse_is_active FROM cash_registers cr JOIN warehouses w ON w.id=cr.warehouse_id WHERE cr.id=?`,
+    )
+    .get(id);
+}
+function findAvailableRegisters(user, warehouseId) {
+  const params = {
+    warehouse_id:
+      user.role === "admin" ? Number(warehouseId) : Number(user.warehouse_id),
+  };
+  return db
+    .prepare(
+      `SELECT cr.id,cr.warehouse_id,cr.name,cr.code,w.name warehouse_name FROM cash_registers cr JOIN warehouses w ON w.id=cr.warehouse_id LEFT JOIN cash_sessions cs ON cs.cash_register_id=cr.id AND cs.status='open' WHERE cr.is_active=1 AND w.is_active=1 AND cs.id IS NULL AND cr.warehouse_id=@warehouse_id ORDER BY cr.name COLLATE NOCASE`,
+    )
+    .all(params);
+}
+const openTransaction = db.transaction(
+  (cashRegisterId, userId, openingCash) => {
+    if (findOpenByUser(userId))
+      throw Object.assign(new Error("User already has an open cash session"), {
+        code: "OPEN_USER_SESSION",
+      });
+    if (
+      db
+        .prepare(
+          "SELECT 1 FROM cash_sessions WHERE cash_register_id=? AND status='open'",
+        )
+        .get(cashRegisterId)
+    )
+      throw Object.assign(
+        new Error("Cash register already has an open session"),
+        { code: "OPEN_REGISTER_SESSION" },
+      );
+    const id = db
+      .prepare(
+        "INSERT INTO cash_sessions(cash_register_id,user_id,opening_cash) VALUES(?,?,?)",
+      )
+      .run(cashRegisterId, userId, roundMoney(openingCash)).lastInsertRowid;
+    return findById(id);
+  },
+);
+const movementTransaction = db.transaction(
+  (sessionId, userId, direction, amount, note) => {
+    const session = findById(sessionId);
+    if (!session || session.status !== "open")
+      throw Object.assign(new Error("Cash session is not open"), {
+        code: "SESSION_NOT_OPEN",
+      });
+    if (Number(session.user_id) !== Number(userId))
+      throw Object.assign(
+        new Error("You cannot modify another user's cash session"),
+        { code: "SESSION_FORBIDDEN" },
+      );
+    const value = roundMoney(amount);
+    if (
+      direction === "OUT" &&
+      Settings.getGroup("cash").block_negative_drawer &&
+      value > calculateExpectedCash(sessionId)
+    )
+      throw Object.assign(
+        new Error("Cash out amount exceeds theoretical cash"),
+        { code: "INSUFFICIENT_CASH" },
+      );
+    db.prepare(
+      "INSERT INTO cash_movements(cash_session_id,direction,movement_type,amount,note,created_by) VALUES(?,?,?,?,?,?)",
+    ).run(
+      sessionId,
+      direction,
+      direction === "IN" ? "MANUAL_CASH_IN" : "MANUAL_CASH_OUT",
+      value,
+      note,
+      userId,
+    );
+    return findById(sessionId);
+  },
+);
+const closeTransaction = db.transaction((id, userId, closingCash, note) => {
+  const session = findById(id);
+  if (!session || session.status !== "open") return null;
+  if (Number(session.user_id) !== Number(userId))
+    throw Object.assign(
+      new Error("You cannot close another user's cash session"),
+      { code: "SESSION_FORBIDDEN" },
+    );
+  const expected = calculateExpectedCash(id),
+    counted = roundMoney(closingCash);
+  db.prepare(
+    "UPDATE cash_sessions SET closing_cash=?,expected_cash_at_close=?,closing_difference=?,closing_note=?,closed_at=CURRENT_TIMESTAMP,status='closed' WHERE id=? AND status='open'",
+  ).run(counted, expected, roundMoney(counted - expected), note || null, id);
+  return findById(id);
+});
+function listMovements(sessionId) {
+  return db
+    .prepare(
+      `SELECT cm.*,u.name created_by_name,
+         COALESCE(s.sale_number,pr.receipt_number,sr.return_number,cr.return_number) reference_label
+       FROM cash_movements cm
+       JOIN users u ON u.id=cm.created_by
+       LEFT JOIN sales s ON cm.reference_type='SALE' AND s.id=cm.reference_id
+       LEFT JOIN purchase_receipts pr ON cm.reference_type='PURCHASE_RECEIPT' AND pr.id=cm.reference_id
+       LEFT JOIN supplier_returns sr ON cm.reference_type='SUPPLIER_RETURN' AND sr.id=cm.reference_id
+       LEFT JOIN sales_returns cr ON cm.reference_type='SALES_RETURN' AND cr.id=cm.reference_id
+       WHERE cm.cash_session_id=? ORDER BY cm.created_at DESC,cm.id DESC`,
+    )
+    .all(sessionId);
+}
+function list(filters, user) {
+  const params = {
+      limit: filters.limit,
+      offset: (filters.page - 1) * filters.limit,
+    },
+    conditions = [];
+  if (user.role === "cashier") {
+    conditions.push("cs.user_id=@access_user");
+    params.access_user = user.id;
+  } else if (user.role !== "admin") {
+    conditions.push("cr.warehouse_id=@access_warehouse");
+    params.access_warehouse = user.warehouse_id;
+  }
+  if (filters.date) {
+    conditions.push("date(cs.opened_at)=@date");
+    params.date = filters.date;
+  }
+  if (filters.registerId) {
+    conditions.push("cs.cash_register_id=@register_id");
+    params.register_id = filters.registerId;
+  }
+  if (filters.userId) {
+    conditions.push("cs.user_id=@user_id");
+    params.user_id = filters.userId;
+  }
+  if (filters.status) {
+    conditions.push("cs.status=@status");
+    params.status = filters.status;
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "",
+    sessions = db
+      .prepare(
+        `${selectFields} ${where} ${groupBy} ORDER BY cs.opened_at DESC LIMIT @limit OFFSET @offset`,
+      )
+      .all(params)
+      .map(hydrate),
+    countParams = { ...params };
+  delete countParams.limit;
+  delete countParams.offset;
+  const total = db
+    .prepare(
+      `SELECT COUNT(*) count FROM cash_sessions cs JOIN cash_registers cr ON cr.id=cs.cash_register_id ${where}`,
+    )
+    .get(countParams).count;
+  return {
+    cash_sessions: sessions,
+    pagination: {
+      page: filters.page,
+      limit: filters.limit,
+      total,
+      total_pages: Math.max(1, Math.ceil(total / filters.limit)),
+    },
+  };
+}
+module.exports = {
+  roundMoney,
+  findById,
+  findOpenByUser,
+  calculateExpectedCash,
+  findRegisterById,
+  findAvailableRegisters,
+  open: openTransaction,
+  createMovement: movementTransaction,
+  close: closeTransaction,
+  listMovements,
+  list,
+};

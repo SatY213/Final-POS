@@ -34,18 +34,20 @@ try {
     assert.equal(db.prepare("SELECT COUNT(*) count FROM units WHERE is_builtin = 1").get().count, 1);
 
     const simple = createThroughController({
-      designation: "Integration Printer", reference: "INT-PRINTER", category_id: categoryId,
+      designation: "Integration Printer", reference: "INT-PRINTER", category_id: null,
       track_stock: true, product_units: [{ unit_id: null, conversion_factor: 1, purchase_price: 25000, selling_price: 30000, is_base: true, is_active: true, barcodes: [] }],
       initial_stock: [{ warehouse_id: warehouseA, product_unit_index: 0, quantity: 1 }],
     }, admin);
     assert.equal(simple.statusCode, 201);
+    assert.equal(simple.body.product.category_id, null);
+    assert.equal(simple.body.product.designation, "Integration Printer");
     assert.equal(simple.body.product.product_units[0].unit_id, genericUnit.id);
     assert.equal(simple.body.product.product_units[0].conversion_factor, 1);
     assert.equal(db.prepare("SELECT quantity FROM product_stock WHERE product_id=? AND warehouse_id=?").get(simple.body.product.id, warehouseA).quantity, 1);
 
     const standard = createThroughController({
       designation: "Integration Cola", reference: "INT-COLA", category_id: categoryId, unit_id: unitId,
-      purchase_price: 90, selling_price: 120, tax_rate: 19, min_stock: 10,
+      purchase_price: 90, selling_price: 120, min_stock: 10,
       track_stock: true, has_expiration: false,
       barcodes: [{ barcode: "990000000001", is_primary: true }, { barcode: "990000000002" }],
       initial_stock: [{ warehouse_id: warehouseA, quantity: 50 }, { warehouse_id: warehouseB, quantity: 25 }],
@@ -53,7 +55,7 @@ try {
     assert.equal(standard.statusCode, 201);
 
     const packaged = createThroughController({
-      designation: "Integration Packaged", reference: "INT-PACK", category_id: categoryId, tax_rate: 0, min_stock: 0,
+      designation: "Integration Packaged", reference: "INT-PACK", category_id: categoryId, min_stock: 0,
       track_stock: true, track_batches: false, track_expiration: false, track_serials: false,
       product_units: [
         { unit_id: unitId, conversion_factor: 1, purchase_price: 10, selling_price: 15, is_base: true, is_active: true, barcodes: [{ barcode: "990000000010", is_primary: true }] },
@@ -65,9 +67,26 @@ try {
     assert.equal(packaged.body.product.product_units.length, 2);
     assert.equal(db.prepare("SELECT quantity FROM product_stock WHERE product_id=? AND warehouse_id=?").get(packaged.body.product.id, warehouseA).quantity, 36);
 
+    const serialized = createThroughController({
+      designation: "Integration Serialized", reference: "INT-SERIAL", category_id: null,
+      track_stock: true, track_serials: true,
+      product_units: [{ unit_id: unitId, conversion_factor: 1, purchase_price: 200, selling_price: 300, is_base: true, is_active: true, barcodes: [] }],
+      initial_stock: [{ warehouse_id: warehouseA, product_unit_index: 0, quantity: 2, serial_numbers: ["SER-001", "SER-002"] }],
+    }, admin);
+    assert.equal(serialized.statusCode, 201);
+    assert.equal(serialized.body.product.track_serials, 1);
+    assert.equal(db.prepare("SELECT COUNT(*) count FROM stock_serials WHERE product_id=? AND status='AVAILABLE'").get(serialized.body.product.id).count, 2);
+    assert.equal(serialized.body.product.stock_by_warehouse[0].available_serials, 2);
+    const invalidSerialized = createThroughController({
+      designation: "Invalid Serialized", category_id: null, track_stock: true, track_serials: true,
+      product_units: [{ unit_id: unitId, conversion_factor: 1, purchase_price: 1, selling_price: 2, is_base: true, is_active: true, barcodes: [] }],
+      initial_stock: [{ warehouse_id: warehouseA, product_unit_index: 0, quantity: 2, serial_numbers: ["ONLY-ONE"] }],
+    }, admin);
+    assert.equal(invalidSerialized.statusCode, 400);
+
     const expiring = createThroughController({
       designation: "Integration Milk", reference: "INT-MILK", category_id: categoryId, unit_id: unitId,
-      purchase_price: 80, selling_price: 110, tax_rate: 0, min_stock: 5,
+      purchase_price: 80, selling_price: 110, min_stock: 5,
       track_stock: true, has_expiration: true, barcodes: [],
       initial_stock: [
         { warehouse_id: warehouseA, quantity: 20, batch_number: "LOT-A", expiration_date: "2027-01-01" },

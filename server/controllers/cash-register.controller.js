@@ -17,7 +17,6 @@ function validate(body, excludedId = null) {
   if (CashRegister.codeExists(code, excludedId)) {
     return { error: "Cash register code already exists", status: 409 };
   }
-
   return {
     value: {
       warehouse_id: warehouseId,

@@ -21,6 +21,7 @@ function validate(body, excludedId = null) {
     body.warehouse_id === undefined
       ? null
       : Number(body.warehouse_id);
+  const warehouseIds = [...new Set((Array.isArray(body.warehouse_ids) ? body.warehouse_ids : warehouseId ? [warehouseId] : []).map(Number))];
   if (!name) return { error: "Name is required" };
   if (!username) return { error: "Username is required" };
   if ((!excludedId || password) && password.length < 6)
@@ -33,6 +34,8 @@ function validate(body, excludedId = null) {
     return { error: "Invalid warehouse" };
   if (warehouseId !== null && !CashRegister.warehouseExists(warehouseId))
     return { error: "Warehouse not found" };
+  if (warehouseIds.some((id) => !Number.isInteger(id) || !CashRegister.warehouseExists(id)))
+    return { error: "One or more warehouses are invalid" };
   if (User.usernameExists(username, excludedId))
     return { error: "Username already exists", status: 409 };
   return {
@@ -41,6 +44,7 @@ function validate(body, excludedId = null) {
       username,
       role,
       warehouse_id: warehouseId,
+      warehouse_ids: warehouseIds,
       is_active: body.is_active !== false,
       password_hash: password ? hashPassword(password) : null,
     },
