@@ -13,6 +13,7 @@ const empty = {
   email: "",
   nif: "",
   nis: "",
+  rib: "",
   tax_article: "",
   commercial_register: "",
   address: "",

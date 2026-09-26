@@ -181,10 +181,10 @@ function orderDetail(id, user) {
   const order = db
     .prepare(
       `SELECT o.*,s.name supplier_name,s.phone supplier_phone,s.email supplier_email,s.address supplier_address,
-        s.nif supplier_nif,s.nis supplier_nis,s.tax_article supplier_tax_article,
+        s.nif supplier_nif,s.nis supplier_nis,s.rib supplier_rib,s.tax_article supplier_tax_article,
         s.commercial_register supplier_commercial_register,s.business_activity supplier_business_activity,
         w.name warehouse_name,w.phone warehouse_phone,w.email warehouse_email,w.address warehouse_address,
-        w.nif warehouse_nif,w.nis warehouse_nis,w.tax_article warehouse_tax_article,
+        w.nif warehouse_nif,w.nis warehouse_nis,w.rib warehouse_rib,w.tax_article warehouse_tax_article,
         w.commercial_register warehouse_commercial_register,w.business_activity warehouse_business_activity
        FROM purchase_orders o JOIN suppliers s ON s.id=o.supplier_id JOIN warehouses w ON w.id=o.warehouse_id WHERE o.id=?`,
     )
@@ -320,10 +320,10 @@ function receiptDetail(id, user) {
   const receipt = db
     .prepare(
       `SELECT r.*,s.name supplier_name,s.phone supplier_phone,s.email supplier_email,s.address supplier_address,
-        s.nif supplier_nif,s.nis supplier_nis,s.tax_article supplier_tax_article,
+        s.nif supplier_nif,s.nis supplier_nis,s.rib supplier_rib,s.tax_article supplier_tax_article,
         s.commercial_register supplier_commercial_register,s.business_activity supplier_business_activity,
         o.order_number,w.name warehouse_name,w.phone warehouse_phone,w.email warehouse_email,w.address warehouse_address,
-        w.nif warehouse_nif,w.nis warehouse_nis,w.tax_article warehouse_tax_article,
+        w.nif warehouse_nif,w.nis warehouse_nis,w.rib warehouse_rib,w.tax_article warehouse_tax_article,
         w.commercial_register warehouse_commercial_register,w.business_activity warehouse_business_activity
        FROM purchase_receipts r JOIN suppliers s ON s.id=r.supplier_id LEFT JOIN purchase_orders o ON o.id=r.purchase_order_id JOIN warehouses w ON w.id=r.warehouse_id WHERE r.id=?`,
     )
@@ -1092,7 +1092,7 @@ const createReturn = db.transaction((receiptId, data, user) => {
 function returnDetail(id, user) {
   const result = db
     .prepare(
-      `SELECT r.*,s.name supplier_name,pr.receipt_number FROM supplier_returns r JOIN suppliers s ON s.id=r.supplier_id JOIN purchase_receipts pr ON pr.id=r.purchase_receipt_id WHERE r.id=?`,
+      `SELECT r.*,s.name supplier_name,s.phone supplier_phone,s.email supplier_email,s.address supplier_address,s.nif supplier_nif,s.nis supplier_nis,s.rib supplier_rib,s.tax_article supplier_tax_article,s.commercial_register supplier_commercial_register,s.business_activity supplier_business_activity,pr.receipt_number,w.name warehouse_name,w.phone warehouse_phone,w.email warehouse_email,w.address warehouse_address,w.nif warehouse_nif,w.nis warehouse_nis,w.rib warehouse_rib,w.tax_article warehouse_tax_article,w.commercial_register warehouse_commercial_register,w.business_activity warehouse_business_activity FROM supplier_returns r JOIN suppliers s ON s.id=r.supplier_id JOIN purchase_receipts pr ON pr.id=r.purchase_receipt_id JOIN warehouses w ON w.id=r.warehouse_id WHERE r.id=?`,
     )
     .get(Number(id));
   if (!result) throw new PurchaseError("Supplier return not found", 404);

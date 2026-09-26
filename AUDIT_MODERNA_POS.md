@@ -1,4 +1,4 @@
-# Audit et stabilisation — MODERNA POS
+# Audit et stabilisation — MODERN POS
 
 État au 22 septembre 2026. Ce document décrit les changements présents dans le workspace et les vérifications réellement effectuées. L'application utilise **SQLite (`better-sqlite3`)**, et non SQL Server comme le suggérait la demande initiale.
 

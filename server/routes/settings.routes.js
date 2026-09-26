@@ -8,6 +8,7 @@ router.post("/backups/upload", require("express").raw({ type: "application/octet
 router.get("/backups/:name/download", controller.downloadBackup);
 router.delete("/backups/:name", controller.deleteBackup);
 router.post("/backups/:name/restore", controller.restoreBackup);
+router.post("/data/reset", controller.resetBusinessData);
 router.get("/payment-methods", controller.paymentMethods);
 router.patch("/payment-methods/:code", controller.paymentStatus);
 router.get("/printers", controller.printers);

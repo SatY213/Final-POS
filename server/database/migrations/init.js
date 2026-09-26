@@ -1,4 +1,7 @@
 const db = require("../../config/database");
+const isFreshDatabase = !db
+  .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='users'")
+  .get();
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
@@ -34,6 +37,7 @@ CREATE TABLE IF NOT EXISTS users (
 
   nif TEXT,
   nis TEXT,
+  rib TEXT,
   tax_article TEXT,
   commercial_register TEXT,
 
@@ -235,6 +239,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT,
     nif TEXT,
     nis TEXT,
+    rib TEXT,
     tax_article TEXT,
     commercial_register TEXT,
     address TEXT,
@@ -254,6 +259,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT,
     nif TEXT,
     nis TEXT,
+    rib TEXT,
     tax_article TEXT,
     commercial_register TEXT,
     address TEXT,
@@ -375,9 +381,6 @@ db.prepare(
 ).run();
 db.prepare(
   "DELETE FROM app_settings WHERE key='payments.allow_split_payment'",
-).run();
-db.prepare(
-  "INSERT INTO customers(name,is_active) SELECT 'Client comptoir',1 WHERE NOT EXISTS(SELECT 1 FROM customers WHERE name='Client comptoir' COLLATE NOCASE)",
 ).run();
 const seedProfile = db.prepare(
   "INSERT OR IGNORE INTO print_profiles(document_type,paper_format,configuration_json) VALUES(?,?,?)",
@@ -942,6 +945,9 @@ ensureColumns("sales_return_lines", [
   ["historical_unit_total", "REAL NOT NULL DEFAULT 0"],
 ]);
 ensureColumns("sales", [["edited_by", "INTEGER"]]);
+ensureColumns("warehouses", [["rib", "TEXT"]]);
+ensureColumns("customers", [["rib", "TEXT"]]);
+ensureColumns("suppliers", [["rib", "TEXT"]]);
 db.exec(`
   CREATE TABLE IF NOT EXISTS warehouse_document_sequences (
     warehouse_id INTEGER NOT NULL,
@@ -1031,6 +1037,8 @@ require("./remove-purchases-tva");
 require("./purchases");
 require("./invoices");
 require("./transactions");
+if (isFreshDatabase && process.env.POS_SKIP_INITIAL_ADMIN !== "1")
+  require("../ensure-initial-admin").ensureInitialAdmin(db);
 // Legacy builds incremented sales numbers per warehouse although sales.sale_number
 // is globally unique.  Bring the global sequence forward before issuing a new
 // number so existing documents are never collided with.

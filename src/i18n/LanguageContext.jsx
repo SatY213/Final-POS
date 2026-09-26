@@ -17,14 +17,17 @@ const en = {
   deleteSupplier: "Delete supplier",
   deleteProduct: "Delete product",
   deleting: "Deleting...",
-  confirmDeleteCustomer: "Permanently delete this customer? This cannot be undone.",
-  confirmDeleteSupplier: "Permanently delete this supplier? This cannot be undone.",
+  confirmDeleteCustomer:
+    "Permanently delete this customer? This cannot be undone.",
+  confirmDeleteSupplier:
+    "Permanently delete this supplier? This cannot be undone.",
   supplierAccount: "Supplier account",
   supplierDebt: "Amount payable",
   availableCredit: "Available credit",
   settledAccount: "Settled account",
   noAccountMovements: "No account movements",
-  confirmDeleteProduct: "Permanently delete “{product}”? Its stock will be deleted. Existing documents retain their historical data.",
+  confirmDeleteProduct:
+    "Permanently delete “{product}”? Its stock will be deleted. Existing documents retain their historical data.",
   settings: "Settings",
   settingsDescription: "Manage application and business configuration",
   home: "Home",
@@ -92,6 +95,7 @@ const en = {
   phone: "Phone",
   email: "Email",
   nif: "NIF",
+  rib: "RIB",
   selling: "Selling",
   status: "Status",
   action: "Action",
@@ -358,14 +362,17 @@ const fr = {
   deleteSupplier: "Supprimer le fournisseur",
   deleteProduct: "Supprimer le produit",
   deleting: "Suppression...",
-  confirmDeleteCustomer: "Supprimer définitivement ce client ? Cette action est irréversible.",
-  confirmDeleteSupplier: "Supprimer définitivement ce fournisseur ? Cette action est irréversible.",
+  confirmDeleteCustomer:
+    "Supprimer définitivement ce client ? Cette action est irréversible.",
+  confirmDeleteSupplier:
+    "Supprimer définitivement ce fournisseur ? Cette action est irréversible.",
   supplierAccount: "Compte fournisseur",
   supplierDebt: "Dette fournisseur",
   availableCredit: "Crédit disponible",
   settledAccount: "Compte soldé",
   noAccountMovements: "Aucun mouvement",
-  confirmDeleteProduct: "Supprimer définitivement « {product} » ? Son stock sera supprimé. Les documents existants conservent leurs données historiques.",
+  confirmDeleteProduct:
+    "Supprimer définitivement « {product} » ? Son stock sera supprimé. Les documents existants conservent leurs données historiques.",
   settings: "Param\u00e8tres",
   settingsDescription:
     "G\u00e9rez la configuration de l'application et de l'entreprise",
@@ -641,7 +648,8 @@ const fr = {
   serialNumber: "Numéro de série",
   selectSerialNumber: "Sélectionner un numéro de série",
   availableSerialNumbers: "Numéros de série disponibles",
-  noAvailableSerialNumbers: "Aucun numéro de série n’est disponible pour ce produit.",
+  noAvailableSerialNumbers:
+    "Aucun numéro de série n’est disponible pour ce produit.",
   addNewSerialNumber: "Ajouter un nouveau numéro de série",
   addToCart: "Ajouter au panier",
   purchasePriceOptional: "Prix d'achat (facultatif)",
@@ -696,14 +704,17 @@ const ar = {
   deleteSupplier: "حذف المورد",
   deleteProduct: "حذف المنتج",
   deleting: "جارٍ الحذف...",
-  confirmDeleteCustomer: "حذف هذا العميل نهائيًا؟ لا يمكن التراجع عن هذا الإجراء.",
-  confirmDeleteSupplier: "حذف هذا المورد نهائيًا؟ لا يمكن التراجع عن هذا الإجراء.",
+  confirmDeleteCustomer:
+    "حذف هذا العميل نهائيًا؟ لا يمكن التراجع عن هذا الإجراء.",
+  confirmDeleteSupplier:
+    "حذف هذا المورد نهائيًا؟ لا يمكن التراجع عن هذا الإجراء.",
   supplierAccount: "حساب المورد",
   supplierDebt: "دين المورد",
   availableCredit: "الرصيد المتاح",
   settledAccount: "حساب مسوّى",
   noAccountMovements: "لا توجد حركات",
-  confirmDeleteProduct: "حذف « {product} » نهائيًا؟ سيتم حذف مخزونه. تحتفظ المستندات الموجودة ببياناتها التاريخية.",
+  confirmDeleteProduct:
+    "حذف « {product} » نهائيًا؟ سيتم حذف مخزونه. تحتفظ المستندات الموجودة ببياناتها التاريخية.",
   settings: "\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a",
   settingsDescription:
     "\u0625\u062f\u0627\u0631\u0629 \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u062a\u0637\u0628\u064a\u0642 \u0648\u0627\u0644\u0645\u0624\u0633\u0633\u0629",
@@ -1166,9 +1177,11 @@ const ar = {
 };
 
 Object.assign(en, {
-  serverUnavailableRetrying: "Connecting to the server… Your session is saved; retrying automatically.",
+  serverUnavailableRetrying:
+    "Connecting to the server… Your session is saved; retrying automatically.",
   purchasesSettingsDescription: "Configure purchase document printing.",
-  settingsHintPurchases: "Choose the default purchase print format or no printing.",
+  settingsHintPurchases:
+    "Choose the default purchase print format or no printing.",
   documentTitle: "Document title",
   SALE_TICKET: "Sales ticket",
   SHIPPING_INVOICE: "Delivery note",
@@ -1214,9 +1227,12 @@ Object.assign(en, {
   MANUAL_CASH_OUT: "Manual Cash Out",
 });
 Object.assign(fr, {
-  serverUnavailableRetrying: "Connexion au serveur… Votre session est conservée ; nouvelle tentative automatique.",
-  purchasesSettingsDescription: "Configurez l’impression des documents d’achat.",
-  settingsHintPurchases: "Choisissez le format d’impression des achats ou aucune impression.",
+  serverUnavailableRetrying:
+    "Connexion au serveur… Votre session est conservée ; nouvelle tentative automatique.",
+  purchasesSettingsDescription:
+    "Configurez l’impression des documents d’achat.",
+  settingsHintPurchases:
+    "Choisissez le format d’impression des achats ou aucune impression.",
   documentTitle: "Titre du document",
   SALE_TICKET: "Ticket de caisse",
   SHIPPING_INVOICE: "Bon de livraison",
@@ -1263,7 +1279,8 @@ Object.assign(fr, {
   MANUAL_CASH_OUT: "Sortie manuelle",
 });
 Object.assign(ar, {
-  serverUnavailableRetrying: "جارٍ الاتصال بالخادم… تم الاحتفاظ بجلستك وستتم إعادة المحاولة تلقائيًا.",
+  serverUnavailableRetrying:
+    "جارٍ الاتصال بالخادم… تم الاحتفاظ بجلستك وستتم إعادة المحاولة تلقائيًا.",
   purchasesSettingsDescription: "اضبط طباعة مستندات الشراء.",
   settingsHintPurchases: "اختر تنسيق طباعة المشتريات أو عدم الطباعة.",
   documentTitle: "عنوان المستند",
@@ -2166,46 +2183,62 @@ Object.assign(ar, {
 });
 Object.assign(en, {
   invoicingSettings: "Invoicing",
-  invoicingSettingsDescription: "Configure default tax values used only on invoices.",
+  invoicingSettingsDescription:
+    "Configure default tax values used only on invoices.",
   invoicingFiscalSection: "Invoice VAT and fiscal stamp",
   setting_tax_enabled: "Enable VAT by default",
   setting_tax_rate: "Default VAT rate",
   setting_stamp_enabled: "Enable fiscal stamp by default",
   setting_stamp_rate: "Default fiscal stamp rate",
-  settingDescription_tax_enabled: "Automatically enable VAT when creating a new invoice.",
+  settingDescription_tax_enabled:
+    "Automatically enable VAT when creating a new invoice.",
   settingDescription_tax_rate: "VAT percentage proposed for each new invoice.",
-  settingDescription_stamp_enabled: "Automatically enable the fiscal stamp on new invoices.",
-  settingDescription_stamp_rate: "Fiscal stamp percentage proposed for each new invoice.",
+  settingDescription_stamp_enabled:
+    "Automatically enable the fiscal stamp on new invoices.",
+  settingDescription_stamp_rate:
+    "Fiscal stamp percentage proposed for each new invoice.",
 });
 Object.assign(fr, {
   invoicingSettings: "Facturation",
-  invoicingSettingsDescription: "Configurer les valeurs fiscales appliquées uniquement aux factures.",
+  invoicingSettingsDescription:
+    "Configurer les valeurs fiscales appliquées uniquement aux factures.",
   invoicingFiscalSection: "TVA et timbre fiscal des factures",
   setting_tax_enabled: "Activer la TVA par défaut",
   setting_tax_rate: "Taux de TVA par défaut",
   setting_stamp_enabled: "Activer le timbre fiscal par défaut",
   setting_stamp_rate: "Taux du timbre fiscal par défaut",
-  settingDescription_tax_enabled: "Active automatiquement la TVA lors de la création d’une facture.",
-  settingDescription_tax_rate: "Pourcentage de TVA proposé pour chaque nouvelle facture.",
-  settingDescription_stamp_enabled: "Active automatiquement le timbre fiscal sur les nouvelles factures.",
-  settingDescription_stamp_rate: "Pourcentage du timbre fiscal proposé pour chaque nouvelle facture.",
+  settingDescription_tax_enabled:
+    "Active automatiquement la TVA lors de la création d’une facture.",
+  settingDescription_tax_rate:
+    "Pourcentage de TVA proposé pour chaque nouvelle facture.",
+  settingDescription_stamp_enabled:
+    "Active automatiquement le timbre fiscal sur les nouvelles factures.",
+  settingDescription_stamp_rate:
+    "Pourcentage du timbre fiscal proposé pour chaque nouvelle facture.",
 });
 Object.assign(ar, {
   invoicingSettings: "الفوترة",
-  invoicingSettingsDescription: "إعداد القيم الضريبية المطبقة على الفواتير فقط.",
+  invoicingSettingsDescription:
+    "إعداد القيم الضريبية المطبقة على الفواتير فقط.",
   invoicingFiscalSection: "ضريبة القيمة المضافة والطابع الجبائي للفواتير",
   setting_tax_enabled: "تفعيل ضريبة القيمة المضافة افتراضيًا",
   setting_tax_rate: "نسبة ضريبة القيمة المضافة الافتراضية",
   setting_stamp_enabled: "تفعيل الطابع الجبائي افتراضيًا",
   setting_stamp_rate: "نسبة الطابع الجبائي الافتراضية",
-  settingDescription_tax_enabled: "تفعيل ضريبة القيمة المضافة تلقائيًا عند إنشاء فاتورة جديدة.",
-  settingDescription_tax_rate: "نسبة ضريبة القيمة المضافة المقترحة لكل فاتورة جديدة.",
-  settingDescription_stamp_enabled: "تفعيل الطابع الجبائي تلقائيًا على الفواتير الجديدة.",
-  settingDescription_stamp_rate: "نسبة الطابع الجبائي المقترحة لكل فاتورة جديدة.",
+  settingDescription_tax_enabled:
+    "تفعيل ضريبة القيمة المضافة تلقائيًا عند إنشاء فاتورة جديدة.",
+  settingDescription_tax_rate:
+    "نسبة ضريبة القيمة المضافة المقترحة لكل فاتورة جديدة.",
+  settingDescription_stamp_enabled:
+    "تفعيل الطابع الجبائي تلقائيًا على الفواتير الجديدة.",
+  settingDescription_stamp_rate:
+    "نسبة الطابع الجبائي المقترحة لكل فاتورة جديدة.",
 });
 Object.assign(en, {
-  reportsDescription: "Management indicators calculated from validated business data",
-  transactionsDescription: "Financial events independent from commercial documents",
+  reportsDescription:
+    "Management indicators calculated from validated business data",
+  transactionsDescription:
+    "Financial events independent from commercial documents",
   searchTransactions: "Search a sale, purchase or partner…",
   partner: "Partner",
   documentNumber: "Document no.",
@@ -2321,11 +2354,15 @@ Object.assign(en, {
   deleteBackup: "Delete backup",
   deleteBackupConfirmation: "Permanently delete this stored backup?",
   restoreBackup: "Restore backup",
-  restoreBackupConfirmation: "Restoration replaces the complete current database. A safety backup will be created first and the API must then be restarted.",
+  restoreBackupConfirmation:
+    "Restoration replaces the complete current database. A safety backup will be created first and the API must then be restarted.",
   importData: "Import",
   exportData: "Export",
   importProducts: "Import products",
   importInitialStock: "Import initial stock / inventory",
+  alsoImportInitialStock: "Also import initial stock / inventory",
+  productsImported: "Products imported.",
+  selectInitialStockFile: "Now select the initial stock file.",
   importCustomers: "Import customers",
   importSuppliers: "Import suppliers",
   csvOnly: "Select a CSV file.",
@@ -2352,8 +2389,10 @@ Object.assign(en, {
   productImageError: "Select a PNG, JPEG or WebP image under 2 MB.",
 });
 Object.assign(fr, {
-  reportsDescription: "Indicateurs de gestion calcul\u00e9s \u00e0 partir des donn\u00e9es m\u00e9tier valid\u00e9es",
-  transactionsDescription: "\u00c9v\u00e9nements financiers ind\u00e9pendants des documents commerciaux",
+  reportsDescription:
+    "Indicateurs de gestion calcul\u00e9s \u00e0 partir des donn\u00e9es m\u00e9tier valid\u00e9es",
+  transactionsDescription:
+    "\u00c9v\u00e9nements financiers ind\u00e9pendants des documents commerciaux",
   searchTransactions: "Rechercher une vente, un achat ou un partenaire…",
   partner: "Partenaire",
   documentNumber: "N° du document",
@@ -2440,7 +2479,8 @@ Object.assign(fr, {
   expirations: "P\u00e9remptions",
   cashEvolution: "\u00c9volution de la caisse",
   generalPreferences: "Pr\u00e9f\u00e9rences g\u00e9n\u00e9rales",
-  generalPreferencesDescription: "Affichage global et comportement de l'application",
+  generalPreferencesDescription:
+    "Affichage global et comportement de l'application",
   applicationName: "Nom de l'application",
   defaultCurrency: "Devise par d\u00e9faut",
   currencyDisplay: "Affichage de la devise",
@@ -2454,7 +2494,8 @@ Object.assign(fr, {
   confirmDestructiveActions: "Confirmer les op\u00e9rations destructives",
   noDefaultValue: "Aucune valeur par d\u00e9faut",
   backupManagement: "Gestion des sauvegardes",
-  backupManagementDescription: "Sauvegardes SQLite compl\u00e8tes pour restaurer l'application",
+  backupManagementDescription:
+    "Sauvegardes SQLite compl\u00e8tes pour restaurer l'application",
   selectBackup: "S\u00e9lectionner une sauvegarde",
   createBackup: "Cr\u00e9er une sauvegarde",
   backupFile: "Fichier de sauvegarde",
@@ -2467,19 +2508,25 @@ Object.assign(fr, {
   restore: "Restaurer",
   noBackups: "Aucune sauvegarde stock\u00e9e",
   deleteBackup: "Supprimer la sauvegarde",
-  deleteBackupConfirmation: "Supprimer d\u00e9finitivement cette sauvegarde stock\u00e9e ?",
+  deleteBackupConfirmation:
+    "Supprimer d\u00e9finitivement cette sauvegarde stock\u00e9e ?",
   restoreBackup: "Restaurer la sauvegarde",
-  restoreBackupConfirmation: "La restauration remplace toute la base actuelle. Une sauvegarde de s\u00e9curit\u00e9 sera cr\u00e9\u00e9e avant l'op\u00e9ration, puis l'API devra \u00eatre red\u00e9marr\u00e9e.",
+  restoreBackupConfirmation:
+    "La restauration remplace toute la base actuelle. Une sauvegarde de s\u00e9curit\u00e9 sera cr\u00e9\u00e9e avant l'op\u00e9ration, puis l'API devra \u00eatre red\u00e9marr\u00e9e.",
   importData: "Importer",
   exportData: "Exporter",
   importProducts: "Importer des produits",
   importInitialStock: "Importer le stock initial / inventaire",
+  alsoImportInitialStock: "Importer également le stock initial / inventaire",
+  productsImported: "Produits importés.",
+  selectInitialStockFile: "Sélectionnez maintenant le fichier de stock initial.",
   importCustomers: "Importer des clients",
   importSuppliers: "Importer des fournisseurs",
   csvOnly: "S\u00e9lectionnez un fichier CSV.",
   downloadTemplate: "T\u00e9l\u00e9charger le mod\u00e8le",
   selectCsvFile: "S\u00e9lectionner un fichier CSV",
-  csvPreviewBeforeImport: "Les donn\u00e9es seront contr\u00f4l\u00e9es avant l'import",
+  csvPreviewBeforeImport:
+    "Les donn\u00e9es seront contr\u00f4l\u00e9es avant l'import",
   duplicateHandling: "Doublons",
   duplicateError: "Bloquer et signaler",
   duplicateSkip: "Ignorer les lignes existantes",
@@ -2497,160 +2544,246 @@ Object.assign(fr, {
   productImage: "Image du produit",
   chooseImage: "Choisir une image",
   removeImage: "Supprimer",
-  productImageError: "S\u00e9lectionnez une image PNG, JPEG ou WebP de moins de 2 Mo.",
+  productImageError:
+    "S\u00e9lectionnez une image PNG, JPEG ou WebP de moins de 2 Mo.",
 });
 Object.assign(ar, {
-  reportsDescription: "\u0645\u0624\u0634\u0631\u0627\u062a \u0627\u0644\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u062d\u0633\u0648\u0628\u0629 \u0645\u0646 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0645\u0639\u062a\u0645\u062f\u0629",
-  transactionsDescription: "\u0623\u062d\u062f\u0627\u062b \u0645\u0627\u0644\u064a\u0629 \u0645\u0633\u062a\u0642\u0644\u0629 \u0639\u0646 \u0627\u0644\u0648\u062b\u0627\u0626\u0642 \u0627\u0644\u062a\u062c\u0627\u0631\u064a\u0629",
-  searchTransactions: "\u0627\u0644\u0628\u062d\u062b \u0639\u0646 \u0628\u064a\u0639 \u0623\u0648 \u0634\u0631\u0627\u0621 \u0623\u0648 \u0634\u0631\u064a\u0643…",
+  reportsDescription:
+    "\u0645\u0624\u0634\u0631\u0627\u062a \u0627\u0644\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u062d\u0633\u0648\u0628\u0629 \u0645\u0646 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0645\u0639\u062a\u0645\u062f\u0629",
+  transactionsDescription:
+    "\u0623\u062d\u062f\u0627\u062b \u0645\u0627\u0644\u064a\u0629 \u0645\u0633\u062a\u0642\u0644\u0629 \u0639\u0646 \u0627\u0644\u0648\u062b\u0627\u0626\u0642 \u0627\u0644\u062a\u062c\u0627\u0631\u064a\u0629",
+  searchTransactions:
+    "\u0627\u0644\u0628\u062d\u062b \u0639\u0646 \u0628\u064a\u0639 \u0623\u0648 \u0634\u0631\u0627\u0621 \u0623\u0648 \u0634\u0631\u064a\u0643…",
   partner: "\u0627\u0644\u0634\u0631\u064a\u0643",
-  documentNumber: "\u0631\u0642\u0645 \u0627\u0644\u0648\u062b\u064a\u0642\u0629",
-  deliveryReturn: "\u0645\u0631\u062a\u062c\u0639 \u0627\u0644\u062a\u0633\u0644\u064a\u0645",
+  documentNumber:
+    "\u0631\u0642\u0645 \u0627\u0644\u0648\u062b\u064a\u0642\u0629",
+  deliveryReturn:
+    "\u0645\u0631\u062a\u062c\u0639 \u0627\u0644\u062a\u0633\u0644\u064a\u0645",
   saleReturn: "\u0645\u0631\u062a\u062c\u0639 \u0627\u0644\u0628\u064a\u0639",
-  purchaseReceipt: "\u0648\u0635\u0644 \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645",
+  purchaseReceipt:
+    "\u0648\u0635\u0644 \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645",
   supplierPayment: "\u062f\u0641\u0639 \u0627\u0644\u0645\u0648\u0631\u062f",
-  supplierReturn: "\u0645\u0631\u062a\u062c\u0639 \u0627\u0644\u0645\u0648\u0631\u062f",
-  supplierReturnCredit: "\u0645\u0631\u062a\u062c\u0639 \u0627\u0644\u0645\u0648\u0631\u062f — \u0627\u0626\u062a\u0645\u0627\u0646",
-  supplierReturnRefund: "\u0645\u0631\u062a\u062c\u0639 \u0627\u0644\u0645\u0648\u0631\u062f — \u0627\u0633\u062a\u0631\u062f\u0627\u062f",
-  searchSupplierPayment: "\u0627\u0644\u0628\u062d\u062b \u0641\u064a \u0645\u062f\u0641\u0648\u0639\u0627\u062a \u0627\u0644\u0645\u0648\u0631\u062f…",
+  supplierReturn:
+    "\u0645\u0631\u062a\u062c\u0639 \u0627\u0644\u0645\u0648\u0631\u062f",
+  supplierReturnCredit:
+    "\u0645\u0631\u062a\u062c\u0639 \u0627\u0644\u0645\u0648\u0631\u062f — \u0627\u0626\u062a\u0645\u0627\u0646",
+  supplierReturnRefund:
+    "\u0645\u0631\u062a\u062c\u0639 \u0627\u0644\u0645\u0648\u0631\u062f — \u0627\u0633\u062a\u0631\u062f\u0627\u062f",
+  searchSupplierPayment:
+    "\u0627\u0644\u0628\u062d\u062b \u0641\u064a \u0645\u062f\u0641\u0648\u0639\u0627\u062a \u0627\u0644\u0645\u0648\u0631\u062f…",
   invoices: "\u0627\u0644\u0641\u0648\u0627\u062a\u064a\u0631",
-  invoiceNumber: "\u0631\u0642\u0645 \u0627\u0644\u0641\u0627\u062a\u0648\u0631\u0629",
-  supplierReference: "\u0645\u0631\u062c\u0639 \u0627\u0644\u0645\u0648\u0631\u062f",
-  linkedReceipts: "\u0648\u0635\u0648\u0644 \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645 \u0627\u0644\u0645\u0631\u062a\u0628\u0637\u0629",
+  invoiceNumber:
+    "\u0631\u0642\u0645 \u0627\u0644\u0641\u0627\u062a\u0648\u0631\u0629",
+  supplierReference:
+    "\u0645\u0631\u062c\u0639 \u0627\u0644\u0645\u0648\u0631\u062f",
+  linkedReceipts:
+    "\u0648\u0635\u0648\u0644 \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645 \u0627\u0644\u0645\u0631\u062a\u0628\u0637\u0629",
   paymentStatus: "\u062d\u0627\u0644\u0629 \u0627\u0644\u062f\u0641\u0639",
   details: "\u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644",
   addPayment: "\u0625\u0636\u0627\u0641\u0629 \u062f\u0641\u0639\u0629",
-  noSupplierPayments: "\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u062f\u0641\u0648\u0639\u0627\u062a \u0645\u0648\u0631\u062f",
+  noSupplierPayments:
+    "\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u062f\u0641\u0648\u0639\u0627\u062a \u0645\u0648\u0631\u062f",
   documents: "\u0648\u062b\u064a\u0642\u0629",
-  displayedTotal: "\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0645\u0639\u0631\u0648\u0636",
-  validatePayment: "\u062a\u062b\u0628\u064a\u062a \u0627\u0644\u062f\u0641\u0639\u0629",
-  remainingToPay: "\u0627\u0644\u0645\u062a\u0628\u0642\u064a \u0644\u0644\u062f\u0641\u0639",
-  dueDate: "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0627\u0633\u062a\u062d\u0642\u0627\u0642",
+  displayedTotal:
+    "\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a \u0627\u0644\u0645\u0639\u0631\u0648\u0636",
+  validatePayment:
+    "\u062a\u062b\u0628\u064a\u062a \u0627\u0644\u062f\u0641\u0639\u0629",
+  remainingToPay:
+    "\u0627\u0644\u0645\u062a\u0628\u0642\u064a \u0644\u0644\u062f\u0641\u0639",
+  dueDate:
+    "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0627\u0633\u062a\u062d\u0642\u0627\u0642",
   paid: "\u0645\u062f\u0641\u0648\u0639",
   receipt: "\u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645",
   exportCsv: "\u062a\u0635\u062f\u064a\u0631 CSV",
   revenue: "\u0631\u0642\u0645 \u0627\u0644\u0623\u0639\u0645\u0627\u0644",
-  paymentsReceived: "\u0627\u0644\u0645\u0628\u0627\u0644\u063a \u0627\u0644\u0645\u0633\u062a\u0644\u0645\u0629",
-  recentActivity: "\u0627\u0644\u0646\u0634\u0627\u0637 \u0627\u0644\u0623\u062e\u064a\u0631",
-  viewTransactions: "\u0639\u0631\u0636 \u0627\u0644\u0645\u0639\u0627\u0645\u0644\u0627\u062a",
+  paymentsReceived:
+    "\u0627\u0644\u0645\u0628\u0627\u0644\u063a \u0627\u0644\u0645\u0633\u062a\u0644\u0645\u0629",
+  recentActivity:
+    "\u0627\u0644\u0646\u0634\u0627\u0637 \u0627\u0644\u0623\u062e\u064a\u0631",
+  viewTransactions:
+    "\u0639\u0631\u0636 \u0627\u0644\u0645\u0639\u0627\u0645\u0644\u0627\u062a",
   alerts: "\u062a\u0646\u0628\u064a\u0647\u0627\u062a",
-  alert_LOW_STOCK: "\u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0623\u0642\u0644 \u0645\u0646 \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u062f\u0646\u0649",
-  alert_OUT_OF_STOCK: "\u0627\u0644\u0645\u0646\u062a\u062c \u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631",
-  alert_EXPIRATION: "\u062f\u0641\u0639\u0629 \u0642\u0631\u064a\u0628\u0629 \u0645\u0646 \u0627\u0646\u062a\u0647\u0627\u0621 \u0627\u0644\u0635\u0644\u0627\u062d\u064a\u0629",
+  alert_LOW_STOCK:
+    "\u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0623\u0642\u0644 \u0645\u0646 \u0627\u0644\u062d\u062f \u0627\u0644\u0623\u062f\u0646\u0649",
+  alert_OUT_OF_STOCK:
+    "\u0627\u0644\u0645\u0646\u062a\u062c \u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631",
+  alert_EXPIRATION:
+    "\u062f\u0641\u0639\u0629 \u0642\u0631\u064a\u0628\u0629 \u0645\u0646 \u0627\u0646\u062a\u0647\u0627\u0621 \u0627\u0644\u0635\u0644\u0627\u062d\u064a\u0629",
   alert_CUSTOMER_DUE: "رصيد العملاء المستحق",
   alert_SUPPLIER_DUE: "رصيد الموردين المستحق",
   transaction_SALE_PAYMENT: "\u062f\u0641\u0639 \u0639\u0645\u064a\u0644",
-  transaction_INVOICE_PAYMENT: "\u062f\u0641\u0639 \u0641\u0627\u062a\u0648\u0631\u0629",
+  transaction_INVOICE_PAYMENT:
+    "\u062f\u0641\u0639 \u0641\u0627\u062a\u0648\u0631\u0629",
   transaction_SUPPLIER_PAYMENT: "\u062f\u0641\u0639 \u0645\u0648\u0631\u062f",
   transaction_PURCHASE_PAYMENT: "دفعة شراء",
-  transaction_CUSTOMER_RETURN_REFUND: "\u0627\u0633\u062a\u0631\u062f\u0627\u062f \u0639\u0645\u064a\u0644",
-  transaction_SUPPLIER_RETURN_REFUND: "\u0627\u0633\u062a\u0631\u062f\u0627\u062f \u0645\u0648\u0631\u062f",
+  transaction_CUSTOMER_RETURN_REFUND:
+    "\u0627\u0633\u062a\u0631\u062f\u0627\u062f \u0639\u0645\u064a\u0644",
+  transaction_SUPPLIER_RETURN_REFUND:
+    "\u0627\u0633\u062a\u0631\u062f\u0627\u062f \u0645\u0648\u0631\u062f",
   report_overview: "\u0646\u0638\u0631\u0629 \u0639\u0627\u0645\u0629",
   report_sales: "\u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a",
   report_purchases: "\u0627\u0644\u0645\u0634\u062a\u0631\u064a\u0627\u062a",
   report_customers: "\u0627\u0644\u0639\u0645\u0644\u0627\u0621",
   report_suppliers: "\u0627\u0644\u0645\u0648\u0631\u062f\u0648\u0646",
   report_stock: "\u0627\u0644\u0645\u062e\u0632\u0648\u0646",
-  report_finance: "\u0627\u0644\u0635\u0646\u062f\u0648\u0642 \u0648\u0627\u0644\u0645\u062f\u0641\u0648\u0639\u0627\u062a",
+  report_finance:
+    "\u0627\u0644\u0635\u0646\u062f\u0648\u0642 \u0648\u0627\u0644\u0645\u062f\u0641\u0648\u0639\u0627\u062a",
   period_today: "\u0627\u0644\u064a\u0648\u0645",
   period_week: "\u0647\u0630\u0627 \u0627\u0644\u0623\u0633\u0628\u0648\u0639",
   period_month: "\u0647\u0630\u0627 \u0627\u0644\u0634\u0647\u0631",
   period_year: "\u0647\u0630\u0647 \u0627\u0644\u0633\u0646\u0629",
   period_custom: "\u0641\u062a\u0631\u0629 \u0645\u062e\u0635\u0635\u0629",
-  salesCount: "\u0639\u062f\u062f \u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a",
-  averageBasket: "\u0645\u062a\u0648\u0633\u0637 \u0627\u0644\u0633\u0644\u0629",
-  customerReceivable: "\u0645\u0633\u062a\u062d\u0642\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621",
-  supplierPayable: "\u0645\u0633\u062a\u062d\u0642\u0627\u062a \u0627\u0644\u0645\u0648\u0631\u062f\u064a\u0646",
+  salesCount:
+    "\u0639\u062f\u062f \u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a",
+  averageBasket:
+    "\u0645\u062a\u0648\u0633\u0637 \u0627\u0644\u0633\u0644\u0629",
+  customerReceivable:
+    "\u0645\u0633\u062a\u062d\u0642\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621",
+  supplierPayable:
+    "\u0645\u0633\u062a\u062d\u0642\u0627\u062a \u0627\u0644\u0645\u0648\u0631\u062f\u064a\u0646",
   returns: "\u0627\u0644\u0645\u0631\u062a\u062c\u0639\u0627\u062a",
   cashIn: "\u062f\u062e\u0648\u0644 \u0646\u0642\u062f\u064a",
-  netCash: "\u0635\u0627\u0641\u064a \u062d\u0631\u0643\u0629 \u0627\u0644\u0646\u0642\u062f",
-  salesEvolution: "\u062a\u0637\u0648\u0631 \u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a",
-  purchasesEvolution: "\u062a\u0637\u0648\u0631 \u0627\u0644\u0645\u0634\u062a\u0631\u064a\u0627\u062a",
-  topProducts: "\u0623\u0641\u0636\u0644 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a",
+  netCash:
+    "\u0635\u0627\u0641\u064a \u062d\u0631\u0643\u0629 \u0627\u0644\u0646\u0642\u062f",
+  salesEvolution:
+    "\u062a\u0637\u0648\u0631 \u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a",
+  purchasesEvolution:
+    "\u062a\u0637\u0648\u0631 \u0627\u0644\u0645\u0634\u062a\u0631\u064a\u0627\u062a",
+  topProducts:
+    "\u0623\u0641\u0636\u0644 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a",
   salesByCategory: "المبيعات حسب الفئة",
-  salesByCustomer: "\u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a \u062d\u0633\u0628 \u0627\u0644\u0639\u0645\u064a\u0644",
+  salesByCustomer:
+    "\u0627\u0644\u0645\u0628\u064a\u0639\u0627\u062a \u062d\u0633\u0628 \u0627\u0644\u0639\u0645\u064a\u0644",
   salesByWarehouse: "المبيعات حسب المستودع",
   paymentMethods: "\u0637\u0631\u0642 \u0627\u0644\u062f\u0641\u0639",
-  purchasesBySupplier: "\u0627\u0644\u0645\u0634\u062a\u0631\u064a\u0627\u062a \u062d\u0633\u0628 \u0627\u0644\u0645\u0648\u0631\u062f",
+  purchasesBySupplier:
+    "\u0627\u0644\u0645\u0634\u062a\u0631\u064a\u0627\u062a \u062d\u0633\u0628 \u0627\u0644\u0645\u0648\u0631\u062f",
   purchasesByProduct: "المشتريات حسب المنتج",
   purchasesByCategory: "المشتريات حسب الفئة",
   purchaseReceipts: "إيصالات الاستلام",
   receivedQuantities: "الكميات المستلمة",
-  customerBalances: "\u0623\u0631\u0635\u062f\u0629 \u0627\u0644\u0639\u0645\u0644\u0627\u0621",
-  supplierBalances: "\u0623\u0631\u0635\u062f\u0629 \u0627\u0644\u0645\u0648\u0631\u062f\u064a\u0646",
-  paymentsByCustomer: "\u0627\u0644\u062f\u0641\u0639\u0627\u062a \u062d\u0633\u0628 \u0627\u0644\u0639\u0645\u064a\u0644",
-  paymentsBySupplier: "\u0627\u0644\u062f\u0641\u0639\u0627\u062a \u062d\u0633\u0628 \u0627\u0644\u0645\u0648\u0631\u062f",
+  customerBalances:
+    "\u0623\u0631\u0635\u062f\u0629 \u0627\u0644\u0639\u0645\u0644\u0627\u0621",
+  supplierBalances:
+    "\u0623\u0631\u0635\u062f\u0629 \u0627\u0644\u0645\u0648\u0631\u062f\u064a\u0646",
+  paymentsByCustomer:
+    "\u0627\u0644\u062f\u0641\u0639\u0627\u062a \u062d\u0633\u0628 \u0627\u0644\u0639\u0645\u064a\u0644",
+  paymentsBySupplier:
+    "\u0627\u0644\u062f\u0641\u0639\u0627\u062a \u062d\u0633\u0628 \u0627\u0644\u0645\u0648\u0631\u062f",
   allCustomers: "\u0643\u0644 \u0627\u0644\u0639\u0645\u0644\u0627\u0621",
   allSuppliers: "\u0643\u0644 \u0627\u0644\u0645\u0648\u0631\u062f\u064a\u0646",
-  noDataForPeriod: "\u0644\u0627 \u062a\u0648\u062c\u062f \u0628\u064a\u0627\u0646\u0627\u062a \u0644\u0647\u0630\u0647 \u0627\u0644\u0641\u062a\u0631\u0629",
-  stockStatus: "\u062d\u0627\u0644\u0629 \u0627\u0644\u0645\u062e\u0632\u0648\u0646",
-  mostMovedProducts: "\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0627\u0644\u0623\u0643\u062b\u0631 \u062d\u0631\u0643\u0629",
-  expirations: "\u0627\u0646\u062a\u0647\u0627\u0621 \u0627\u0644\u0635\u0644\u0627\u062d\u064a\u0629",
-  cashEvolution: "\u062a\u0637\u0648\u0631 \u0627\u0644\u0635\u0646\u062f\u0648\u0642",
-  generalPreferences: "\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0639\u0627\u0645\u0629",
-  generalPreferencesDescription: "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0639\u0631\u0636 \u0648\u0633\u0644\u0648\u0643 \u0627\u0644\u062a\u0637\u0628\u064a\u0642",
-  applicationName: "\u0627\u0633\u0645 \u0627\u0644\u062a\u0637\u0628\u064a\u0642",
-  defaultCurrency: "\u0627\u0644\u0639\u0645\u0644\u0629 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629",
+  noDataForPeriod:
+    "\u0644\u0627 \u062a\u0648\u062c\u062f \u0628\u064a\u0627\u0646\u0627\u062a \u0644\u0647\u0630\u0647 \u0627\u0644\u0641\u062a\u0631\u0629",
+  stockStatus:
+    "\u062d\u0627\u0644\u0629 \u0627\u0644\u0645\u062e\u0632\u0648\u0646",
+  mostMovedProducts:
+    "\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0627\u0644\u0623\u0643\u062b\u0631 \u062d\u0631\u0643\u0629",
+  expirations:
+    "\u0627\u0646\u062a\u0647\u0627\u0621 \u0627\u0644\u0635\u0644\u0627\u062d\u064a\u0629",
+  cashEvolution:
+    "\u062a\u0637\u0648\u0631 \u0627\u0644\u0635\u0646\u062f\u0648\u0642",
+  generalPreferences:
+    "\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0639\u0627\u0645\u0629",
+  generalPreferencesDescription:
+    "\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0627\u0644\u0639\u0631\u0636 \u0648\u0633\u0644\u0648\u0643 \u0627\u0644\u062a\u0637\u0628\u064a\u0642",
+  applicationName:
+    "\u0627\u0633\u0645 \u0627\u0644\u062a\u0637\u0628\u064a\u0642",
+  defaultCurrency:
+    "\u0627\u0644\u0639\u0645\u0644\u0629 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629",
   currencyDisplay: "\u0639\u0631\u0636 \u0627\u0644\u0639\u0645\u0644\u0629",
-  monetaryDecimals: "\u0627\u0644\u0645\u0646\u0627\u0632\u0644 \u0627\u0644\u0639\u0634\u0631\u064a\u0629",
-  dateFormat: "\u062a\u0646\u0633\u064a\u0642 \u0627\u0644\u062a\u0627\u0631\u064a\u062e",
+  monetaryDecimals:
+    "\u0627\u0644\u0645\u0646\u0627\u0632\u0644 \u0627\u0644\u0639\u0634\u0631\u064a\u0629",
+  dateFormat:
+    "\u062a\u0646\u0633\u064a\u0642 \u0627\u0644\u062a\u0627\u0631\u064a\u062e",
   timeFormat: "\u062a\u0646\u0633\u064a\u0642 \u0627\u0644\u0648\u0642\u062a",
-  defaultWarehouse: "\u0627\u0644\u0645\u062e\u0632\u0646 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a",
-  defaultCashRegister: "\u0627\u0644\u0635\u0646\u062f\u0648\u0642 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a",
+  defaultWarehouse:
+    "\u0627\u0644\u0645\u062e\u0632\u0646 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a",
+  defaultCashRegister:
+    "\u0627\u0644\u0635\u0646\u062f\u0648\u0642 \u0627\u0644\u0627\u0641\u062a\u0631\u0627\u0636\u064a",
   defaultPageSize: "\u062d\u062c\u0645 \u0627\u0644\u0635\u0641\u062d\u0629",
-  productImagesEnabled: "\u062a\u0641\u0639\u064a\u0644 \u0635\u0648\u0631 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a",
-  confirmDestructiveActions: "\u062a\u0623\u0643\u064a\u062f \u0639\u0645\u0644\u064a\u0627\u062a \u0627\u0644\u062d\u0630\u0641",
-  noDefaultValue: "\u0628\u062f\u0648\u0646 \u0642\u064a\u0645\u0629 \u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629",
-  backupManagement: "\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0646\u0633\u062e \u0627\u0644\u0627\u062d\u062a\u064a\u0627\u0637\u064a\u0629",
-  backupManagementDescription: "\u0646\u0633\u062e SQLite \u0643\u0627\u0645\u0644\u0629 \u0644\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u062a\u0637\u0628\u064a\u0642",
+  productImagesEnabled:
+    "\u062a\u0641\u0639\u064a\u0644 \u0635\u0648\u0631 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a",
+  confirmDestructiveActions:
+    "\u062a\u0623\u0643\u064a\u062f \u0639\u0645\u0644\u064a\u0627\u062a \u0627\u0644\u062d\u0630\u0641",
+  noDefaultValue:
+    "\u0628\u062f\u0648\u0646 \u0642\u064a\u0645\u0629 \u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0629",
+  backupManagement:
+    "\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0646\u0633\u062e \u0627\u0644\u0627\u062d\u062a\u064a\u0627\u0637\u064a\u0629",
+  backupManagementDescription:
+    "\u0646\u0633\u062e SQLite \u0643\u0627\u0645\u0644\u0629 \u0644\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u062a\u0637\u0628\u064a\u0642",
   selectBackup: "\u0627\u062e\u062a\u064a\u0627\u0631 \u0646\u0633\u062e\u0629",
   createBackup: "\u0625\u0646\u0634\u0627\u0621 \u0646\u0633\u062e\u0629",
   backupFile: "\u0645\u0644\u0641 \u0627\u0644\u0646\u0633\u062e\u0629",
-  creationDate: "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0625\u0646\u0634\u0627\u0621",
+  creationDate:
+    "\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0625\u0646\u0634\u0627\u0621",
   size: "\u0627\u0644\u062d\u062c\u0645",
   actions: "\u0627\u0644\u0625\u062c\u0631\u0627\u0621\u0627\u062a",
   compatible: "\u0645\u062a\u0648\u0627\u0641\u0642\u0629",
   invalid: "\u063a\u064a\u0631 \u0635\u0627\u0644\u062d\u0629",
   download: "\u062a\u0646\u0632\u064a\u0644",
   restore: "\u0627\u0633\u062a\u0639\u0627\u062f\u0629",
-  noBackups: "\u0644\u0627 \u062a\u0648\u062c\u062f \u0646\u0633\u062e \u0645\u062d\u0641\u0648\u0638\u0629",
+  noBackups:
+    "\u0644\u0627 \u062a\u0648\u062c\u062f \u0646\u0633\u062e \u0645\u062d\u0641\u0648\u0638\u0629",
   deleteBackup: "\u062d\u0630\u0641 \u0627\u0644\u0646\u0633\u062e\u0629",
-  deleteBackupConfirmation: "\u0647\u0644 \u062a\u0631\u064a\u062f \u062d\u0630\u0641 \u0647\u0630\u0647 \u0627\u0644\u0646\u0633\u062e\u0629 \u0646\u0647\u0627\u0626\u064a\u0627\u061f",
-  restoreBackup: "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u0646\u0633\u062e\u0629",
-  restoreBackupConfirmation: "\u0633\u064a\u062a\u0645 \u0627\u0633\u062a\u0628\u062f\u0627\u0644 \u0642\u0627\u0639\u062f\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u062d\u0627\u0644\u064a\u0629 \u0628\u0627\u0644\u0643\u0627\u0645\u0644. \u0633\u064a\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0646\u0633\u062e\u0629 \u0623\u0645\u0627\u0646 \u0623\u0648\u0644\u0627.",
+  deleteBackupConfirmation:
+    "\u0647\u0644 \u062a\u0631\u064a\u062f \u062d\u0630\u0641 \u0647\u0630\u0647 \u0627\u0644\u0646\u0633\u062e\u0629 \u0646\u0647\u0627\u0626\u064a\u0627\u061f",
+  restoreBackup:
+    "\u0627\u0633\u062a\u0639\u0627\u062f\u0629 \u0627\u0644\u0646\u0633\u062e\u0629",
+  restoreBackupConfirmation:
+    "\u0633\u064a\u062a\u0645 \u0627\u0633\u062a\u0628\u062f\u0627\u0644 \u0642\u0627\u0639\u062f\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u062d\u0627\u0644\u064a\u0629 \u0628\u0627\u0644\u0643\u0627\u0645\u0644. \u0633\u064a\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0646\u0633\u062e\u0629 \u0623\u0645\u0627\u0646 \u0623\u0648\u0644\u0627.",
   importData: "\u0627\u0633\u062a\u064a\u0631\u0627\u062f",
   exportData: "\u062a\u0635\u062f\u064a\u0631",
-  importProducts: "\u0627\u0633\u062a\u064a\u0631\u0627\u062f \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a",
-  importInitialStock: "\u0627\u0633\u062a\u064a\u0631\u0627\u062f \u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0627\u0644\u0623\u0648\u0644\u064a / \u0627\u0644\u062c\u0631\u062f",
-  importCustomers: "\u0627\u0633\u062a\u064a\u0631\u0627\u062f \u0627\u0644\u0639\u0645\u0644\u0627\u0621",
-  importSuppliers: "\u0627\u0633\u062a\u064a\u0631\u0627\u062f \u0627\u0644\u0645\u0648\u0631\u062f\u064a\u0646",
+  importProducts:
+    "\u0627\u0633\u062a\u064a\u0631\u0627\u062f \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a",
+  importInitialStock:
+    "\u0627\u0633\u062a\u064a\u0631\u0627\u062f \u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0627\u0644\u0623\u0648\u0644\u064a / \u0627\u0644\u062c\u0631\u062f",
+  alsoImportInitialStock:
+    "\u0627\u0633\u062a\u064a\u0631\u0627\u062f \u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0627\u0644\u0623\u0648\u0644\u064a / \u0627\u0644\u062c\u0631\u062f \u0623\u064a\u0636\u064b\u0627",
+  productsImported:
+    "\u062a\u0645 \u0627\u0633\u062a\u064a\u0631\u0627\u062f \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a.",
+  selectInitialStockFile:
+    "\u0627\u062e\u062a\u0631 \u0627\u0644\u0622\u0646 \u0645\u0644\u0641 \u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0627\u0644\u0623\u0648\u0644\u064a.",
+  importCustomers:
+    "\u0627\u0633\u062a\u064a\u0631\u0627\u062f \u0627\u0644\u0639\u0645\u0644\u0627\u0621",
+  importSuppliers:
+    "\u0627\u0633\u062a\u064a\u0631\u0627\u062f \u0627\u0644\u0645\u0648\u0631\u062f\u064a\u0646",
   csvOnly: "\u0627\u062e\u062a\u0631 \u0645\u0644\u0641 CSV.",
-  downloadTemplate: "\u062a\u0646\u0632\u064a\u0644 \u0627\u0644\u0646\u0645\u0648\u0630\u062c",
+  downloadTemplate:
+    "\u062a\u0646\u0632\u064a\u0644 \u0627\u0644\u0646\u0645\u0648\u0630\u062c",
   selectCsvFile: "\u0627\u062e\u062a\u064a\u0627\u0631 \u0645\u0644\u0641 CSV",
-  csvPreviewBeforeImport: "\u0633\u064a\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0642\u0628\u0644 \u0627\u0644\u0627\u0633\u062a\u064a\u0631\u0627\u062f",
+  csvPreviewBeforeImport:
+    "\u0633\u064a\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0642\u0628\u0644 \u0627\u0644\u0627\u0633\u062a\u064a\u0631\u0627\u062f",
   duplicateHandling: "\u0627\u0644\u062a\u0643\u0631\u0627\u0631",
-  duplicateError: "\u0625\u064a\u0642\u0627\u0641 \u0648\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u062e\u0637\u0623",
-  duplicateSkip: "\u062a\u062c\u0627\u0647\u0644 \u0627\u0644\u0633\u062c\u0644\u0627\u062a \u0627\u0644\u0645\u0648\u062c\u0648\u062f\u0629",
-  duplicateUpdate: "\u062a\u062d\u062f\u064a\u062b \u0627\u0644\u0633\u062c\u0644\u0627\u062a \u0627\u0644\u0645\u0648\u062c\u0648\u062f\u0629",
-  validateAndPreview: "\u062a\u062d\u0642\u0642 \u0648\u0645\u0639\u0627\u064a\u0646\u0629",
-  confirmImport: "\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0627\u0633\u062a\u064a\u0631\u0627\u062f",
+  duplicateError:
+    "\u0625\u064a\u0642\u0627\u0641 \u0648\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u062e\u0637\u0623",
+  duplicateSkip:
+    "\u062a\u062c\u0627\u0647\u0644 \u0627\u0644\u0633\u062c\u0644\u0627\u062a \u0627\u0644\u0645\u0648\u062c\u0648\u062f\u0629",
+  duplicateUpdate:
+    "\u062a\u062d\u062f\u064a\u062b \u0627\u0644\u0633\u062c\u0644\u0627\u062a \u0627\u0644\u0645\u0648\u062c\u0648\u062f\u0629",
+  validateAndPreview:
+    "\u062a\u062d\u0642\u0642 \u0648\u0645\u0639\u0627\u064a\u0646\u0629",
+  confirmImport:
+    "\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0627\u0633\u062a\u064a\u0631\u0627\u062f",
   totalRows: "\u0627\u0644\u0633\u0637\u0648\u0631",
   validRows: "\u0635\u062d\u064a\u062d\u0629",
   invalidRows: "\u063a\u064a\u0631 \u0635\u062d\u064a\u062d\u0629",
   errors: "\u0627\u0644\u0623\u062e\u0637\u0627\u0621",
-  importCompleted: "\u0627\u0643\u062a\u0645\u0644 \u0627\u0644\u0627\u0633\u062a\u064a\u0631\u0627\u062f",
+  importCompleted:
+    "\u0627\u0643\u062a\u0645\u0644 \u0627\u0644\u0627\u0633\u062a\u064a\u0631\u0627\u062f",
   created: "\u062a\u0645 \u0625\u0646\u0634\u0627\u0624\u0647\u0627",
   updated: "\u062a\u0645 \u062a\u062d\u062f\u064a\u062b\u0647\u0627",
   ignored: "\u062a\u0645 \u062a\u062c\u0627\u0647\u0644\u0647\u0627",
   productImage: "\u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0646\u062a\u062c",
   chooseImage: "\u0627\u062e\u062a\u064a\u0627\u0631 \u0635\u0648\u0631\u0629",
   removeImage: "\u062d\u0630\u0641",
-  productImageError: "\u0627\u062e\u062a\u0631 \u0635\u0648\u0631\u0629 PNG \u0623\u0648 JPEG \u0623\u0648 WebP \u0623\u0642\u0644 \u0645\u0646 2 \u0645\u064a\u063a\u0627\u0628\u0627\u064a\u062a.",
+  productImageError:
+    "\u0627\u062e\u062a\u0631 \u0635\u0648\u0631\u0629 PNG \u0623\u0648 JPEG \u0623\u0648 WebP \u0623\u0642\u0644 \u0645\u0646 2 \u0645\u064a\u063a\u0627\u0628\u0627\u064a\u062a.",
 });
 Object.assign(en, {
   filters: "Filters",
   advancedFilters: "Advanced filters",
-  advancedFiltersDescription: "Refine the list without cluttering the workspace.",
+  advancedFiltersDescription:
+    "Refine the list without cluttering the workspace.",
   apply: "Apply",
   deliveriesDescription: "Delivery notes and physical stock issues",
   searchDeliveries: "Sale number or customer...",
@@ -2658,14 +2791,16 @@ Object.assign(en, {
   markAsShipped: "Mark as shipped",
   markAsDelivered: "Mark as delivered",
   confirmShipping: "Confirm shipment",
-  confirmShippingMessage: "Confirm shipment? The corresponding stock will be issued.",
+  confirmShippingMessage:
+    "Confirm shipment? The corresponding stock will be issued.",
   ship: "Ship",
   stockAttention: "Low or out of stock",
 });
 Object.assign(fr, {
   filters: "Filtres",
   advancedFilters: "Filtres avancés",
-  advancedFiltersDescription: "Affinez la liste sans encombrer l'espace de travail.",
+  advancedFiltersDescription:
+    "Affinez la liste sans encombrer l'espace de travail.",
   apply: "Appliquer",
   deliveriesDescription: "Bons de livraison et sorties physiques",
   searchDeliveries: "N° vente ou client...",
@@ -2673,75 +2808,317 @@ Object.assign(fr, {
   markAsShipped: "Marquer comme expédiée",
   markAsDelivered: "Marquer comme livrée",
   confirmShipping: "Confirmer l'expédition",
-  confirmShippingMessage: "Confirmer l'expédition ? Le stock correspondant sera sorti.",
+  confirmShippingMessage:
+    "Confirmer l'expédition ? Le stock correspondant sera sorti.",
   ship: "Expédier",
   stockAttention: "Stock faible ou épuisé",
 });
 Object.assign(ar, {
   filters: "\u0627\u0644\u0645\u0631\u0634\u062d\u0627\u062a",
-  advancedFilters: "\u0645\u0631\u0634\u062d\u0627\u062a \u0645\u062a\u0642\u062f\u0645\u0629",
-  advancedFiltersDescription: "\u062d\u062f\u062f \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0628\u062f\u0648\u0646 \u0625\u0632\u062d\u0627\u0645 \u0645\u0633\u0627\u062d\u0629 \u0627\u0644\u0639\u0645\u0644.",
+  advancedFilters:
+    "\u0645\u0631\u0634\u062d\u0627\u062a \u0645\u062a\u0642\u062f\u0645\u0629",
+  advancedFiltersDescription:
+    "\u062d\u062f\u062f \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0628\u062f\u0648\u0646 \u0625\u0632\u062d\u0627\u0645 \u0645\u0633\u0627\u062d\u0629 \u0627\u0644\u0639\u0645\u0644.",
   apply: "\u062a\u0637\u0628\u064a\u0642",
-  deliveriesDescription: "\u0633\u0646\u062f\u0627\u062a \u0627\u0644\u062a\u0633\u0644\u064a\u0645 \u0648\u0625\u062e\u0631\u0627\u062c \u0627\u0644\u0645\u062e\u0632\u0648\u0646",
-  searchDeliveries: "\u0631\u0642\u0645 \u0627\u0644\u0628\u064a\u0639 \u0623\u0648 \u0627\u0644\u0639\u0645\u064a\u0644...",
-  noDeliveries: "\u0644\u0627 \u062a\u0648\u062c\u062f \u0639\u0645\u0644\u064a\u0629 \u062a\u0633\u0644\u064a\u0645 \u062a\u0637\u0627\u0628\u0642 \u0627\u0644\u0645\u0631\u0634\u062d\u0627\u062a",
-  markAsShipped: "\u062a\u062d\u062f\u064a\u062f \u0643\u0645\u0634\u062d\u0648\u0646",
-  markAsDelivered: "\u062a\u062d\u062f\u064a\u062f \u0643\u0645\u0633\u0644\u0651\u0645",
-  confirmShipping: "\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0634\u062d\u0646",
-  confirmShippingMessage: "\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0634\u062d\u0646\u061f \u0633\u064a\u062a\u0645 \u0625\u062e\u0631\u0627\u062c \u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0627\u0644\u0645\u0642\u0627\u0628\u0644.",
+  deliveriesDescription:
+    "\u0633\u0646\u062f\u0627\u062a \u0627\u0644\u062a\u0633\u0644\u064a\u0645 \u0648\u0625\u062e\u0631\u0627\u062c \u0627\u0644\u0645\u062e\u0632\u0648\u0646",
+  searchDeliveries:
+    "\u0631\u0642\u0645 \u0627\u0644\u0628\u064a\u0639 \u0623\u0648 \u0627\u0644\u0639\u0645\u064a\u0644...",
+  noDeliveries:
+    "\u0644\u0627 \u062a\u0648\u062c\u062f \u0639\u0645\u0644\u064a\u0629 \u062a\u0633\u0644\u064a\u0645 \u062a\u0637\u0627\u0628\u0642 \u0627\u0644\u0645\u0631\u0634\u062d\u0627\u062a",
+  markAsShipped:
+    "\u062a\u062d\u062f\u064a\u062f \u0643\u0645\u0634\u062d\u0648\u0646",
+  markAsDelivered:
+    "\u062a\u062d\u062f\u064a\u062f \u0643\u0645\u0633\u0644\u0651\u0645",
+  confirmShipping:
+    "\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0634\u062d\u0646",
+  confirmShippingMessage:
+    "\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0634\u062d\u0646\u061f \u0633\u064a\u062a\u0645 \u0625\u062e\u0631\u0627\u062c \u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0627\u0644\u0645\u0642\u0627\u0628\u0644.",
   ship: "\u0634\u062d\u0646",
-  stockAttention: "\u0645\u062e\u0632\u0648\u0646 \u0645\u0646\u062e\u0641\u0636 \u0623\u0648 \u0646\u0627\u0641\u062f",
+  stockAttention:
+    "\u0645\u062e\u0632\u0648\u0646 \u0645\u0646\u062e\u0641\u0636 \u0623\u0648 \u0646\u0627\u0641\u062f",
 });
 Object.assign(en, {
-  companyLogo: "Company logo", chooseLogo: "Choose image", removeLogo: "Remove logo",
+  companyLogo: "Company logo",
+  chooseLogo: "Choose image",
+  removeLogo: "Remove logo",
   logoFileError: "Choose a PNG, JPEG or WebP image smaller than 1 MB.",
-  validateReceipt: "Validate receipt", supplierRemaining: "Supplier balance",
-  PURCHASE_PAYMENT: "Supplier payment", CUSTOMER_REFUND: "Customer refund",
+  validateReceipt: "Validate receipt",
+  supplierRemaining: "Supplier balance",
+  PURCHASE_PAYMENT: "Supplier payment",
+  CUSTOMER_REFUND: "Customer refund",
   EXPENSE: "Expense",
-  insufficientStock: "Insufficient stock", save: "Save", search: "Search",
+  insufficientStock: "Insufficient stock",
+  save: "Save",
+  search: "Search",
   select: "Select",
-  delivery: "Delivery", invoice: "Invoice",
+  delivery: "Delivery",
+  invoice: "Invoice",
 });
 Object.assign(fr, {
-  companyLogo: "Logo de l'entreprise", chooseLogo: "Choisir une image", removeLogo: "Supprimer le logo",
+  companyLogo: "Logo de l'entreprise",
+  chooseLogo: "Choisir une image",
+  removeLogo: "Supprimer le logo",
   logoFileError: "Choisissez une image PNG, JPEG ou WebP de moins de 1 Mo.",
-  validateReceipt: "Valider la réception", supplierRemaining: "Reste fournisseur",
-  PURCHASE_PAYMENT: "Paiement fournisseur", CUSTOMER_REFUND: "Remboursement client",
+  validateReceipt: "Valider la réception",
+  supplierRemaining: "Reste fournisseur",
+  PURCHASE_PAYMENT: "Paiement fournisseur",
+  CUSTOMER_REFUND: "Remboursement client",
   EXPENSE: "Dépense",
-  insufficientStock: "Stock insuffisant", save: "Enregistrer", search: "Rechercher",
+  insufficientStock: "Stock insuffisant",
+  save: "Enregistrer",
+  search: "Rechercher",
   select: "Sélectionner",
-  delivery: "Livraison", invoice: "Facture",
+  delivery: "Livraison",
+  invoice: "Facture",
 });
 Object.assign(ar, {
-  companyLogo: "شعار المؤسسة", chooseLogo: "اختيار صورة", removeLogo: "إزالة الشعار",
+  companyLogo: "شعار المؤسسة",
+  chooseLogo: "اختيار صورة",
+  removeLogo: "إزالة الشعار",
   logoFileError: "اختر صورة PNG أو JPEG أو WebP بحجم أقل من 1 ميغابايت.",
-  validateReceipt: "تأكيد الاستلام", supplierRemaining: "المتبقي للمورد",
-  PURCHASE_PAYMENT: "دفع للمورد", CUSTOMER_REFUND: "رد أموال للعميل",
+  validateReceipt: "تأكيد الاستلام",
+  supplierRemaining: "المتبقي للمورد",
+  PURCHASE_PAYMENT: "دفع للمورد",
+  CUSTOMER_REFUND: "رد أموال للعميل",
   EXPENSE: "مصروف",
-  insufficientStock: "مخزون غير كافٍ", save: "حفظ", search: "بحث",
+  insufficientStock: "مخزون غير كافٍ",
+  save: "حفظ",
+  search: "بحث",
   select: "اختيار",
-  delivery: "تسليم", invoice: "فاتورة",
+  delivery: "تسليم",
+  invoice: "فاتورة",
 });
 Object.assign(en, {
-  restoreBackupConfirmation: "A safety backup will be created, then this backup will be restored when the API server is restarted. Changes made before that restart will not be kept.",
-  restoreScheduled: "Restore scheduled. Restart the API server to apply it. Changes made before restarting will be lost; you may need to sign in again if the backup does not contain this session.",
+  restoreBackupConfirmation:
+    "A safety backup will be created, then this backup will be restored when the API server is restarted. Changes made before that restart will not be kept.",
+  restoreScheduled:
+    "Restore scheduled. Restart the API server to apply it. Changes made before restarting will be lost; you may need to sign in again if the backup does not contain this session.",
 });
 Object.assign(fr, {
-  restoreBackupConfirmation: "Une sauvegarde de sécurité sera créée, puis cette sauvegarde sera restaurée au prochain redémarrage du serveur API. Les modifications effectuées avant ce redémarrage ne seront pas conservées.",
-  restoreScheduled: "Restauration programmée. Redémarrez le serveur API pour l’appliquer. Les modifications faites avant le redémarrage seront perdues ; une nouvelle connexion peut être nécessaire si la sauvegarde ne contient pas cette session.",
+  restoreBackupConfirmation:
+    "Une sauvegarde de sécurité sera créée, puis cette sauvegarde sera restaurée au prochain redémarrage du serveur API. Les modifications effectuées avant ce redémarrage ne seront pas conservées.",
+  restoreScheduled:
+    "Restauration programmée. Redémarrez le serveur API pour l’appliquer. Les modifications faites avant le redémarrage seront perdues ; une nouvelle connexion peut être nécessaire si la sauvegarde ne contient pas cette session.",
 });
 Object.assign(ar, {
-  restoreBackupConfirmation: "سيتم إنشاء نسخة احتياطية للأمان، ثم استعادة النسخة المختارة عند إعادة تشغيل خادم API. لن تُحفظ التغييرات التي تُجرى قبل إعادة التشغيل.",
-  restoreScheduled: "تمت جدولة الاستعادة. أعد تشغيل خادم API لتطبيقها. ستفقد التغييرات التي تتم قبل إعادة التشغيل، وقد تحتاج إلى تسجيل الدخول مجددًا إذا لم تتضمن النسخة هذه الجلسة.",
+  restoreBackupConfirmation:
+    "سيتم إنشاء نسخة احتياطية للأمان، ثم استعادة النسخة المختارة عند إعادة تشغيل خادم API. لن تُحفظ التغييرات التي تُجرى قبل إعادة التشغيل.",
+  restoreScheduled:
+    "تمت جدولة الاستعادة. أعد تشغيل خادم API لتطبيقها. ستفقد التغييرات التي تتم قبل إعادة التشغيل، وقد تحتاج إلى تسجيل الدخول مجددًا إذا لم تتضمن النسخة هذه الجلسة.",
 });
 for (const [phrase, [english, arabic]] of Object.entries(uiPhrases)) {
   en[phrase] = english;
   fr[phrase] = phrase;
   ar[phrase] = arabic;
 }
-Object.assign(en, { serialNumberAlreadyAdded: "This serial number has already been added.", serialNumberAddFailed: "Could not add the serial number." });
-Object.assign(fr, { serialNumberAlreadyAdded: "Ce numéro de série a déjà été ajouté.", serialNumberAddFailed: "Impossible d’ajouter le numéro de série." });
-Object.assign(ar, { serialNumberAlreadyAdded: "تمت إضافة هذا الرقم التسلسلي بالفعل.", serialNumberAddFailed: "تعذرت إضافة الرقم التسلسلي." });
+Object.assign(en, {
+  serialNumberAlreadyAdded: "This serial number has already been added.",
+  serialNumberAddFailed: "Could not add the serial number.",
+});
+Object.assign(fr, {
+  serialNumberAlreadyAdded: "Ce numéro de série a déjà été ajouté.",
+  serialNumberAddFailed: "Impossible d’ajouter le numéro de série.",
+});
+Object.assign(ar, {
+  serialNumberAlreadyAdded: "تمت إضافة هذا الرقم التسلسلي بالفعل.",
+  serialNumberAddFailed: "تعذرت إضافة الرقم التسلسلي.",
+});
+Object.assign(en, {
+  exportFormat: "Export format",
+  csvOrSqlOnly: "Select a CSV or SQL file.",
+  selectCsvOrSqlFile: "Select a CSV or SQL file",
+  csvOrSqlPreviewBeforeImport: "The data will be validated before import",
+  csvFormat: "CSV",
+  sqlFormat: "SQL",
+  sqlInsertTemplate: "SQL INSERT",
+});
+Object.assign(fr, {
+  exportFormat: "Format d’export",
+  csvOrSqlOnly: "Sélectionnez un fichier CSV ou SQL.",
+  selectCsvOrSqlFile: "Sélectionner un fichier CSV ou SQL",
+  csvOrSqlPreviewBeforeImport: "Les données seront validées avant l’import",
+  csvFormat: "CSV",
+  sqlFormat: "SQL",
+  sqlInsertTemplate: "Instructions SQL INSERT",
+});
+Object.assign(ar, {
+  exportFormat: "تنسيق التصدير",
+  csvOrSqlOnly: "اختر ملف CSV أو SQL.",
+  selectCsvOrSqlFile: "اختيار ملف CSV أو SQL",
+  csvOrSqlPreviewBeforeImport: "سيتم التحقق من البيانات قبل الاستيراد",
+  csvFormat: "CSV",
+  sqlFormat: "SQL",
+  sqlInsertTemplate: "تعليمات SQL INSERT",
+});
+Object.assign(en, {
+  connectionServer: "Connection / Server",
+  connectionServerDescription:
+    "Choose where this workstation reads and writes MODERN data.",
+  settingsHintConnection:
+    "Configure the local or external MODERN API for this workstation.",
+  localData: "Local data",
+  localDataDescription:
+    "Use the API and SQLite database installed on this computer.",
+  externalServer: "External server",
+  externalServerDescription: "Connect this workstation to a shared MODERN API.",
+  apiBaseUrl: "MODERN API base URL",
+  apiUrlExample: "https://api.example.com",
+  testConnection: "Test connection",
+  connectionTestSuccess:
+    "Connection successful. Compatible MODERN API detected.",
+  apiUrlSecurityHint:
+    "Only the API address is stored on this computer. Never enter database credentials here.",
+  applyConnection: "Apply connection",
+  changeConnectionTitle: "Change data connection",
+  changeConnectionConfirmation:
+    "The current session will be closed and MODERN will reconnect using the selected server. Local data will not be deleted or modified.",
+  initialConnectionSetup: "Data connection",
+  initialConnectionSetupDescription:
+    "Choose how this workstation connects to MODERN.",
+  continue: "Continue",
+  confirm: "Confirm",
+  deleteAllData: "Delete all existing data",
+  deleteAllDataDescription:
+    "Deletes all business data and other users. The current user, organization configuration and settings are preserved. A safety backup is created first.",
+  deleteAllDataConfirmation:
+    "This operation permanently deletes products, stock, customers, suppliers, sales, purchases, invoices, payments and cash movements. Type SUPPRIMER to continue.",
+  dataResetComplete:
+    "All business data was deleted. The current user and application configuration were preserved.",
+});
+Object.assign(fr, {
+  connectionServer: "Connexion / Serveur",
+  connectionServerDescription:
+    "Choisissez où ce poste lit et enregistre les données MODERN.",
+  settingsHintConnection:
+    "Configurez l’API MODERN locale ou externe de ce poste.",
+  localData: "Données locales",
+  localDataDescription:
+    "Utiliser l’API et la base SQLite installées sur cet ordinateur.",
+  externalServer: "Serveur externe",
+  externalServerDescription: "Connecter ce poste à une API MODERN partagée.",
+  apiBaseUrl: "URL de base de l’API MODERN",
+  apiUrlExample: "https://api.exemple.dz",
+  testConnection: "Tester la connexion",
+  connectionTestSuccess: "Connexion réussie. API MODERN compatible détectée.",
+  apiUrlSecurityHint:
+    "Seule l’adresse de l’API est conservée sur ce poste. Ne saisissez jamais d’identifiants de base de données ici.",
+  applyConnection: "Appliquer la connexion",
+  changeConnectionTitle: "Changer la connexion aux données",
+  changeConnectionConfirmation:
+    "La session actuelle sera fermée et MODERN se reconnectera au serveur choisi. Les données locales ne seront ni supprimées ni modifiées.",
+  initialConnectionSetup: "Connexion aux données",
+  initialConnectionSetupDescription:
+    "Choisissez comment ce poste se connecte à MODERN.",
+  continue: "Continuer",
+  confirm: "Confirmer",
+  deleteAllData: "Supprimer toutes les données existantes",
+  deleteAllDataDescription:
+    "Supprime toutes les données métier et les autres utilisateurs. L’utilisateur actuel, la configuration de l’organisation et les paramètres sont conservés. Une sauvegarde de sécurité est créée avant.",
+  deleteAllDataConfirmation:
+    "Cette opération supprime définitivement produits, stock, clients, fournisseurs, ventes, achats, factures, paiements et mouvements de caisse. Saisissez SUPPRIMER pour continuer.",
+  dataResetComplete:
+    "Toutes les données métier ont été supprimées. L’utilisateur actuel et la configuration ont été conservés.",
+});
+Object.assign(ar, {
+  connectionServer:
+    "\u0627\u0644\u0627\u062a\u0635\u0627\u0644 / \u0627\u0644\u062e\u0627\u062f\u0645",
+  connectionServerDescription:
+    "\u0627\u062e\u062a\u0631 \u0645\u0643\u0627\u0646 \u0642\u0631\u0627\u0621\u0629 \u0648\u062d\u0641\u0638 \u0628\u064a\u0627\u0646\u0627\u062a MODERN \u0644\u0647\u0630\u0627 \u0627\u0644\u062c\u0647\u0627\u0632.",
+  settingsHintConnection:
+    "\u0625\u0639\u062f\u0627\u062f API MODERN \u0627\u0644\u0645\u062d\u0644\u064a \u0623\u0648 \u0627\u0644\u062e\u0627\u0631\u062c\u064a.",
+  localData:
+    "\u0628\u064a\u0627\u0646\u0627\u062a \u0645\u062d\u0644\u064a\u0629",
+  localDataDescription:
+    "\u0627\u0633\u062a\u062e\u062f\u0627\u0645 API \u0648\u0642\u0627\u0639\u062f\u0629 SQLite \u0627\u0644\u0645\u062b\u0628\u062a\u0629 \u0639\u0644\u0649 \u0647\u0630\u0627 \u0627\u0644\u062c\u0647\u0627\u0632.",
+  externalServer: "\u062e\u0627\u062f\u0645 \u062e\u0627\u0631\u062c\u064a",
+  externalServerDescription:
+    "\u0631\u0628\u0637 \u0647\u0630\u0627 \u0627\u0644\u062c\u0647\u0627\u0632 \u0628\u0640 API MODERN \u0645\u0634\u062a\u0631\u0643.",
+  apiBaseUrl: "\u0639\u0646\u0648\u0627\u0646 API MODERN",
+  apiUrlExample: "https://api.example.com",
+  testConnection:
+    "\u0627\u062e\u062a\u0628\u0627\u0631 \u0627\u0644\u0627\u062a\u0635\u0627\u0644",
+  connectionTestSuccess:
+    "\u0646\u062c\u062d \u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628\u0640 API MODERN \u0645\u062a\u0648\u0627\u0641\u0642.",
+  apiUrlSecurityHint:
+    "\u064a\u064f\u062d\u0641\u0638 \u0639\u0646\u0648\u0627\u0646 API \u0641\u0642\u0637. \u0644\u0627 \u062a\u062f\u062e\u0644 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0639\u062a\u0645\u0627\u062f \u0642\u0627\u0639\u062f\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a.",
+  applyConnection:
+    "\u062a\u0637\u0628\u064a\u0642 \u0627\u0644\u0627\u062a\u0635\u0627\u0644",
+  changeConnectionTitle:
+    "\u062a\u063a\u064a\u064a\u0631 \u0627\u062a\u0635\u0627\u0644 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a",
+  changeConnectionConfirmation:
+    "\u0633\u064a\u062a\u0645 \u0625\u063a\u0644\u0627\u0642 \u0627\u0644\u062c\u0644\u0633\u0629 \u0648\u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u0627\u062a\u0635\u0627\u0644. \u0644\u0646 \u062a\u064f\u062d\u0630\u0641 \u0623\u0648 \u062a\u064f\u0639\u062f\u0644 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0645\u062d\u0644\u064a\u0629.",
+  initialConnectionSetup:
+    "\u0627\u062a\u0635\u0627\u0644 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a",
+  initialConnectionSetupDescription:
+    "\u0627\u062e\u062a\u0631 \u0643\u064a\u0641\u064a\u0629 \u0627\u062a\u0635\u0627\u0644 \u0647\u0630\u0627 \u0627\u0644\u062c\u0647\u0627\u0632 \u0628\u0640 MODERN.",
+  continue: "\u0645\u062a\u0627\u0628\u0639\u0629",
+  confirm: "\u062a\u0623\u0643\u064a\u062f",
+  deleteAllData:
+    "\u062d\u0630\u0641 \u0643\u0644 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a",
+  deleteAllDataDescription:
+    "\u062d\u0630\u0641 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0639\u0645\u0644 \u0648\u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u064a\u0646 \u0627\u0644\u0622\u062e\u0631\u064a\u0646 \u0645\u0639 \u0627\u0644\u0627\u062d\u062a\u0641\u0627\u0638 \u0628\u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645 \u0627\u0644\u062d\u0627\u0644\u064a \u0648\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a. \u0633\u064a\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0646\u0633\u062e\u0629 \u0623\u0645\u0627\u0646 \u0623\u0648\u0644\u0627\u064b.",
+  deleteAllDataConfirmation:
+    "\u0633\u064a\u062a\u0645 \u062d\u0630\u0641 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0648\u0627\u0644\u0645\u062e\u0632\u0648\u0646 \u0648\u0627\u0644\u0639\u0645\u0644\u0627\u0621 \u0648\u0627\u0644\u0645\u0648\u0631\u062f\u064a\u0646 \u0648\u0627\u0644\u0648\u062b\u0627\u0626\u0642 \u0648\u0627\u0644\u0645\u062f\u0641\u0648\u0639\u0627\u062a \u0646\u0647\u0627\u0626\u064a\u0627\u064b. \u0627\u0643\u062a\u0628 SUPPRIMER \u0644\u0644\u0645\u062a\u0627\u0628\u0639\u0629.",
+  dataResetComplete:
+    "\u062a\u0645 \u062d\u0630\u0641 \u0643\u0644 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0639\u0645\u0644 \u0645\u0639 \u0627\u0644\u0627\u062d\u062a\u0641\u0627\u0638 \u0628\u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645 \u0627\u0644\u062d\u0627\u0644\u064a \u0648\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a.",
+});
+Object.assign(en, {
+  softwareActivation: "Software activation",
+  softwareActivationDescription:
+    "An activation code is required before you can use MODERNA POS on this computer.",
+  activationCode: "Activation code",
+  activate: "Activate",
+  activating: "Activating...",
+  activationInternetNotice: "An Internet connection is required for the first activation only.",
+  activationInvalidCode: "The activation code is invalid or does not exist.",
+  activationInactiveOrExpired: "This subscription is inactive or expired.",
+  activationDeviceLimit: "This activation is already assigned to another computer or its device limit has been reached.",
+  activationRateLimited: "Too many attempts. Please try again later.",
+  activationTimeout: "The activation server took too long to respond.",
+  activationInternetRequired: "Unable to contact the activation server. Check your Internet connection.",
+  activationServerInvalid: "The activation server returned an invalid license.",
+  activationFingerprintUnavailable: "This computer could not be identified securely.",
+  activationServerUnavailable: "The activation service is temporarily unavailable.",
+  activationFailed: "Activation failed.",
+});
+Object.assign(fr, {
+  softwareActivation: "Activation du logiciel",
+  softwareActivationDescription:
+    "Un code d\u2019activation est requis avant de pouvoir utiliser MODERNA POS sur cet ordinateur.",
+  activationCode: "Code d\u2019activation",
+  activate: "Activer",
+  activating: "Activation...",
+  activationInternetNotice: "Une connexion Internet est requise uniquement pour la premi\u00e8re activation.",
+  activationInvalidCode: "Le code d\u2019activation est invalide ou n\u2019existe pas.",
+  activationInactiveOrExpired: "Cet abonnement est inactif ou expir\u00e9.",
+  activationDeviceLimit: "Cette activation est d\u00e9j\u00e0 attribu\u00e9e \u00e0 un autre ordinateur ou la limite d\u2019appareils est atteinte.",
+  activationRateLimited: "Trop de tentatives. R\u00e9essayez plus tard.",
+  activationTimeout: "Le serveur d\u2019activation a mis trop de temps \u00e0 r\u00e9pondre.",
+  activationInternetRequired: "Impossible de joindre le serveur d\u2019activation. V\u00e9rifiez votre connexion Internet.",
+  activationServerInvalid: "Le serveur d\u2019activation a renvoy\u00e9 une licence invalide.",
+  activationFingerprintUnavailable: "Cet ordinateur n\u2019a pas pu \u00eatre identifi\u00e9 de mani\u00e8re s\u00e9curis\u00e9e.",
+  activationServerUnavailable: "Le service d\u2019activation est temporairement indisponible.",
+  activationFailed: "L\u2019activation a \u00e9chou\u00e9.",
+});
+Object.assign(ar, {
+  softwareActivation: "\u062a\u0641\u0639\u064a\u0644 \u0627\u0644\u0628\u0631\u0646\u0627\u0645\u062c",
+  softwareActivationDescription: "\u064a\u0644\u0632\u0645 \u0631\u0645\u0632 \u062a\u0641\u0639\u064a\u0644 \u0642\u0628\u0644 \u0627\u0633\u062a\u062e\u062f\u0627\u0645 MODERNA POS \u0639\u0644\u0649 \u0647\u0630\u0627 \u0627\u0644\u062d\u0627\u0633\u0648\u0628.",
+  activationCode: "\u0631\u0645\u0632 \u0627\u0644\u062a\u0641\u0639\u064a\u0644",
+  activate: "\u062a\u0641\u0639\u064a\u0644",
+  activating: "\u062c\u0627\u0631\u064a \u0627\u0644\u062a\u0641\u0639\u064a\u0644...",
+  activationInternetNotice: "\u064a\u0644\u0632\u0645 \u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628\u0627\u0644\u0625\u0646\u062a\u0631\u0646\u062a \u0644\u0644\u062a\u0641\u0639\u064a\u0644 \u0627\u0644\u0623\u0648\u0644 \u0641\u0642\u0637.",
+  activationInvalidCode: "\u0631\u0645\u0632 \u0627\u0644\u062a\u0641\u0639\u064a\u0644 \u063a\u064a\u0631 \u0635\u0627\u0644\u062d \u0623\u0648 \u063a\u064a\u0631 \u0645\u0648\u062c\u0648\u062f.",
+  activationInactiveOrExpired: "\u0647\u0630\u0627 \u0627\u0644\u0627\u0634\u062a\u0631\u0627\u0643 \u063a\u064a\u0631 \u0646\u0634\u0637 \u0623\u0648 \u0645\u0646\u062a\u0647\u064a.",
+  activationDeviceLimit: "\u0647\u0630\u0627 \u0627\u0644\u062a\u0641\u0639\u064a\u0644 \u0645\u0631\u062a\u0628\u0637 \u0628\u062c\u0647\u0627\u0632 \u0622\u062e\u0631 \u0623\u0648 \u062a\u0645 \u0628\u0644\u0648\u063a \u062d\u062f \u0627\u0644\u0623\u062c\u0647\u0632\u0629.",
+  activationRateLimited: "\u0645\u062d\u0627\u0648\u0644\u0627\u062a \u0643\u062b\u064a\u0631\u0629. \u062d\u0627\u0648\u0644 \u0644\u0627\u062d\u0642\u0627\u064b.",
+  activationTimeout: "\u062a\u0623\u062e\u0631 \u062e\u0627\u062f\u0645 \u0627\u0644\u062a\u0641\u0639\u064a\u0644 \u0641\u064a \u0627\u0644\u0631\u062f.",
+  activationInternetRequired: "\u062a\u0639\u0630\u0631 \u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628\u062e\u0627\u062f\u0645 \u0627\u0644\u062a\u0641\u0639\u064a\u0644. \u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0625\u0646\u062a\u0631\u0646\u062a.",
+  activationServerInvalid: "\u0623\u0631\u0633\u0644 \u062e\u0627\u062f\u0645 \u0627\u0644\u062a\u0641\u0639\u064a\u0644 \u062a\u0631\u062e\u064a\u0635\u0627\u064b \u063a\u064a\u0631 \u0635\u0627\u0644\u062d.",
+  activationFingerprintUnavailable: "\u062a\u0639\u0630\u0631 \u062a\u0639\u0631\u064a\u0641 \u0647\u0630\u0627 \u0627\u0644\u062d\u0627\u0633\u0648\u0628 \u0628\u0623\u0645\u0627\u0646.",
+  activationServerUnavailable: "\u062e\u062f\u0645\u0629 \u0627\u0644\u062a\u0641\u0639\u064a\u0644 \u063a\u064a\u0631 \u0645\u062a\u0627\u062d\u0629 \u0645\u0624\u0642\u062a\u0627\u064b.",
+  activationFailed: "\u0641\u0634\u0644 \u0627\u0644\u062a\u0641\u0639\u064a\u0644.",
+});
 fr.Close = "Fermer";
 const messages = { en, fr, ar };
 const LanguageContext = createContext(null);

@@ -1,14 +1,18 @@
 import React, { useState } from "react";
+import { Server } from "lucide-react";
 import { login } from "../../api/auth";
 import logo from "../../assets/logo.png";
 import { useLanguage } from "../../i18n/LanguageContext";
+import Modal from "../../components/ui/Modal";
+import ConnectionPanel from "../../components/connection/ConnectionPanel";
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, connectionConfig }) {
   const { t } = useLanguage();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [connectionOpen, setConnectionOpen] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -119,10 +123,34 @@ export default function Login({ onLogin }) {
           >
             {loading ? t("signingIn") : t("signIn")}
           </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              window.electronAPI?.openConnectionWindow?.();
+              setConnectionOpen(true);
+            }}
+            className="flex h-11 w-full items-center justify-center gap-2 border border-gray-400 bg-white px-4 text-sm font-semibold text-black hover:bg-gray-50"
+          >
+            <Server size={16} />
+            {t("connectionServer")}
+          </button>
         </form>
 
         <p className="mt-8 text-center text-xs text-black">POS Modern</p>
       </div>
+
+      <Modal
+        open={connectionOpen}
+        title={t("connectionServer")}
+        onClose={() => {
+          setConnectionOpen(false);
+          window.electronAPI?.closeMainWindow?.();
+        }}
+        width="md"
+      >
+        <ConnectionPanel initialConfig={connectionConfig} />
+      </Modal>
     </div>
   );
 }

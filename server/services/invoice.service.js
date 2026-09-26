@@ -38,7 +38,7 @@ function nextNumberPreview() {
 function detail(id, user) {
   const invoice = db
     .prepare(
-      `SELECT i.*,c.name customer_name,c.phone customer_phone,c.email customer_email,c.nif customer_nif,c.nis customer_nis,c.tax_article customer_tax_article,c.commercial_register customer_commercial_register,c.address customer_address,c.business_activity customer_business_activity,w.name warehouse_name,w.phone warehouse_phone,w.email warehouse_email,w.nif warehouse_nif,w.nis warehouse_nis,w.tax_article warehouse_tax_article,w.commercial_register warehouse_commercial_register,w.address warehouse_address,w.business_activity warehouse_business_activity,u.name created_by_name FROM invoices i LEFT JOIN customers c ON c.id=i.customer_id JOIN warehouses w ON w.id=i.warehouse_id JOIN users u ON u.id=i.created_by WHERE i.id=?`,
+      `SELECT i.*,c.name customer_name,c.phone customer_phone,c.email customer_email,c.nif customer_nif,c.nis customer_nis,c.rib customer_rib,c.tax_article customer_tax_article,c.commercial_register customer_commercial_register,c.address customer_address,c.business_activity customer_business_activity,w.name warehouse_name,w.phone warehouse_phone,w.email warehouse_email,w.nif warehouse_nif,w.nis warehouse_nis,w.rib warehouse_rib,w.tax_article warehouse_tax_article,w.commercial_register warehouse_commercial_register,w.address warehouse_address,w.business_activity warehouse_business_activity,u.name created_by_name FROM invoices i LEFT JOIN customers c ON c.id=i.customer_id JOIN warehouses w ON w.id=i.warehouse_id JOIN users u ON u.id=i.created_by WHERE i.id=?`,
     )
     .get(Number(id));
   if (!invoice) throw new InvoiceError("Invoice not found", 404);

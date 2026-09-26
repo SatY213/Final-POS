@@ -1,5 +1,5 @@
 const defaults = {
-  application_name: "MODERNA POS",
+  application_name: "MODERN POS",
   default_currency: "DZD",
   currency_display: "SYMBOL_AFTER",
   monetary_decimals: 2,
@@ -13,5 +13,10 @@ const defaults = {
 };
 
 let values = { ...defaults };
-export function setRuntimeSettings(next = {}) { values = { ...defaults, ...next }; return values; }
-export function getRuntimeSettings() { return values; }
+export function setRuntimeSettings(next = {}) {
+  values = { ...defaults, ...next };
+  return values;
+}
+export function getRuntimeSettings() {
+  return values;
+}

@@ -5,18 +5,18 @@ const path = require('node:path');
 module.exports = {
   packagerConfig: {
     asar: true,
-    icon: path.join(__dirname, 'build-assets', 'app-icon'),
+    icon: path.join(__dirname, 'pos-modern.ico'),
     extraResource: [
       path.join(__dirname, 'build-runtime'),
-      path.join(__dirname, 'build-demo', 'pos-modern.db'),
-      path.join(__dirname, 'build-assets', 'app-icon.png'),
+      path.join(__dirname, 'build-install', 'pos-modern.db'),
+      path.join(__dirname, 'pos-modern.ico'),
     ],
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: { name: 'POSModern', setupExe: 'POSModernSetup.exe', setupIcon: path.join(__dirname, 'build-assets', 'app-icon.ico') },
+      config: { name: 'POSModern', setupExe: 'POSModernSetup.exe', setupIcon: path.join(__dirname, 'pos-modern.ico') },
     },
     {
       name: '@electron-forge/maker-zip',

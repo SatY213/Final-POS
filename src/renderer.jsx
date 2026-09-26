@@ -19,10 +19,17 @@ import Purchases from "./pages/Purchases/Purchases";
 import PurchaseOrders from "./pages/Purchases/PurchaseOrders";
 import PointOfPurchase from "./pages/PointOfPurchase/PointOfPurchase";
 import Reports from "./pages/Reports/Reports";
+import ConnectionSetup from "./pages/Setup/ConnectionSetup";
+import Activation from "./pages/Activation/Activation";
 
 import "./index.css";
 import { LanguageProvider, useLanguage } from "./i18n/LanguageContext";
-import { apiGet, AUTH_EXPIRED_EVENT } from "./api/client";
+import {
+  apiGet,
+  AUTH_EXPIRED_EVENT,
+  loadConnectionConfig,
+  setConnectionConfig,
+} from "./api/client";
 import { getCurrentCashSession } from "./api/cash-session.model";
 import { getProductWarehouses } from "./api/product.model";
 import AppLayout from "./layouts/AppLayout";
@@ -37,8 +44,12 @@ import {
 
 function App() {
   const { t } = useLanguage();
+  const [license, setLicense] = useState(undefined);
+  const [connection, setConnection] = useState(undefined);
   const [session, setSession] = useState(getStoredSession);
-  const [sessionVerified, setSessionVerified] = useState(() => !getStoredSession());
+  const [sessionVerified, setSessionVerified] = useState(
+    () => !getStoredSession(),
+  );
   const [sessionConnectionError, setSessionConnectionError] = useState(false);
 
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -58,6 +69,27 @@ function App() {
   }, []);
 
   useEffect(() => {
+    window.electronAPI
+      ?.getLicenseStatus?.()
+      .then((result) => setLicense(result?.valid ? result : null))
+      .catch(() => setLicense(null));
+  }, []);
+
+  useEffect(() => {
+    if (!license) return;
+    loadConnectionConfig()
+      .then(setConnection)
+      .catch(() => setConnection(null));
+  }, [license]);
+
+  useEffect(() => {
+    if (!license || connection === undefined) return;
+    if (connection) window.electronAPI?.closeMainWindow?.();
+    else window.electronAPI?.openConnectionWindow?.();
+  }, [license, connection]);
+
+  useEffect(() => {
+    if (!connection) return;
     const saved = getStoredSession();
     if (!saved) return;
     if (!saved.token) {
@@ -66,28 +98,29 @@ function App() {
     }
     let active = true;
     let retryTimer;
-    const verify = () => apiGet("/api/auth/me")
-      .then(({ user }) => {
-        if (!active || getAuthToken() !== saved.token) return;
-        const verified = { ...saved, user };
-        setStoredSession(verified);
-        setSession(verified);
-        setSessionConnectionError(false);
-        setSessionVerified(true);
-      })
-      .catch((error) => {
-        // An unavailable API must not discard a persisted session. A genuine
-        // 401 is handled by the shared client and sends the user to login.
-        if (!active || error.status === 401) return;
-        setSessionConnectionError(true);
-        retryTimer = window.setTimeout(verify, 2000);
-      });
+    const verify = () =>
+      apiGet("/api/auth/me")
+        .then(({ user }) => {
+          if (!active || getAuthToken() !== saved.token) return;
+          const verified = { ...saved, user };
+          setStoredSession(verified);
+          setSession(verified);
+          setSessionConnectionError(false);
+          setSessionVerified(true);
+        })
+        .catch((error) => {
+          // An unavailable API must not discard a persisted session. A genuine
+          // 401 is handled by the shared client and sends the user to login.
+          if (!active || error.status === 401) return;
+          setSessionConnectionError(true);
+          retryTimer = window.setTimeout(verify, 2000);
+        });
     verify();
     return () => {
       active = false;
       window.clearTimeout(retryTimer);
     };
-  }, []);
+  }, [connection]);
 
   useEffect(() => {
     if (!session || !sessionVerified) return;
@@ -100,16 +133,17 @@ function App() {
       setCashSessionLoading(true);
       setCashSessionError("");
       setWarehouseError("");
-      const [currentCashSession, authorizedWarehouses, preferences] = await Promise.all([
-        getCurrentCashSession(),
-        getProductWarehouses(),
-        getSettings("general"),
-      ]);
+      const [currentCashSession, authorizedWarehouses, preferences] =
+        await Promise.all([
+          getCurrentCashSession(),
+          getProductWarehouses(),
+          getSettings("general"),
+        ]);
       setCashSession(currentCashSession);
       setWarehouses(authorizedWarehouses);
       setGeneralSettings(preferences);
       setRuntimeSettings(preferences);
-      document.title = preferences.application_name || "MODERNA POS";
+      document.title = preferences.application_name || "MODERN POS";
 
       const persistedId = Number(
         localStorage.getItem(`pos_active_warehouse_${session.user.id}`),
@@ -127,9 +161,9 @@ function App() {
             ? persistedId
             : validIds.has(defaultId)
               ? defaultId
-            : validIds.has(assignedId)
-              ? assignedId
-              : authorizedWarehouses[0]?.id || "";
+              : validIds.has(assignedId)
+                ? assignedId
+                : authorizedWarehouses[0]?.id || "";
       setActiveWarehouseId(nextWarehouseId ? String(nextWarehouseId) : "");
       if (nextWarehouseId)
         localStorage.setItem(
@@ -204,11 +238,47 @@ function App() {
     setNavigationData(data);
   }
 
+  if (license === undefined)
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-black/60">
+        {t("loading")}
+      </div>
+    );
+  if (!license)
+    return (
+      <Activation
+        onActivated={() => {
+          setLicense({ valid: true });
+        }}
+      />
+    );
+  if (connection === undefined)
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-black/60">
+        {t("loading")}
+      </div>
+    );
+  if (!connection)
+    return (
+      <ConnectionSetup
+        onComplete={(value) => {
+          setConnectionConfig(value);
+          setConnection(value);
+          setSession(null);
+          setSessionVerified(true);
+          window.electronAPI?.closeMainWindow?.();
+        }}
+      />
+    );
   if (!session) {
-    return <Login onLogin={handleLogin} />;
+    return <Login onLogin={handleLogin} connectionConfig={connection} />;
   }
   if (!sessionVerified) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-black/60">{t(sessionConnectionError ? "serverUnavailableRetrying" : "loading")}</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-black/60">
+        {t(sessionConnectionError ? "serverUnavailableRetrying" : "loading")}
+      </div>
+    );
   }
 
   const activeCashSession =
@@ -264,13 +334,31 @@ function App() {
         initialFilters={navigationData}
       />
     ) : currentPage === "transactions" ? (
-      <Transactions onNavigate={handleNavigate} warehouseId={activeWarehouseId} initialFilters={navigationData} />
+      <Transactions
+        onNavigate={handleNavigate}
+        warehouseId={activeWarehouseId}
+        initialFilters={navigationData}
+      />
     ) : currentPage === "purchases" ? (
-      <Purchases warehouseId={activeWarehouseId} onNavigate={handleNavigate} initialFilters={navigationData} onReceiptFinalized={loadApplicationContext} />
+      <Purchases
+        warehouseId={activeWarehouseId}
+        onNavigate={handleNavigate}
+        initialFilters={navigationData}
+        onReceiptFinalized={loadApplicationContext}
+      />
     ) : currentPage === "purchase-orders" ? (
-      <PurchaseOrders warehouseId={activeWarehouseId} onNavigate={handleNavigate} />
+      <PurchaseOrders
+        warehouseId={activeWarehouseId}
+        onNavigate={handleNavigate}
+      />
     ) : currentPage === "pop" ? (
-      <PointOfPurchase warehouseId={activeWarehouseId} initialOrder={navigationData?.order || null} initialEditReceipt={navigationData?.editReceipt || null} onNavigate={handleNavigate} onReceiptFinalized={loadApplicationContext} />
+      <PointOfPurchase
+        warehouseId={activeWarehouseId}
+        initialOrder={navigationData?.order || null}
+        initialEditReceipt={navigationData?.editReceipt || null}
+        onNavigate={handleNavigate}
+        onReceiptFinalized={loadApplicationContext}
+      />
     ) : currentPage === "invoice-builder" ? (
       <InvoiceBuilder
         warehouseId={activeWarehouseId}
@@ -288,7 +376,11 @@ function App() {
     ) : currentPage === "reports" ? (
       <Reports warehouseId={activeWarehouseId} onNavigate={handleNavigate} />
     ) : (
-      <Dashboard cashSession={activeCashSession} warehouseId={activeWarehouseId} onNavigate={handleNavigate} />
+      <Dashboard
+        cashSession={activeCashSession}
+        warehouseId={activeWarehouseId}
+        onNavigate={handleNavigate}
+      />
     );
 
   return (

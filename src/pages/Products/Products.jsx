@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  Download,
   FolderCog,
   Package,
   Plus,
@@ -34,7 +33,8 @@ import Modal from "../../components/ui/Modal";
 import { formatMoney } from "../../utils/formatters";
 import { getRuntimeSettings } from "../../utils/runtimeSettings";
 import DataExchangeDialog from "../../components/data-exchange/DataExchangeDialog";
-import { exportData } from "../../api/data-exchange.model";
+import ExportButton from "../../components/data-exchange/ExportButton";
+import Button from "../../components/ui/Button";
 
 const defaultFilters = () => ({
   search: "",
@@ -76,7 +76,7 @@ export default function Products({
   const [selectedProducts, setSelectedProducts] = useState({});
   const [labelProducts, setLabelProducts] = useState([]);
   const [labelProfile, setLabelProfile] = useState(null);
-  const [exchangeEntity, setExchangeEntity] = useState(null);
+  const [exchangeOpen, setExchangeOpen] = useState(false);
   const canManage = ["admin", "manager"].includes(session?.user?.role);
   const imagesEnabled = Boolean(getRuntimeSettings().product_images_enabled);
   const debouncedSearch = useDebouncedValue(filters.search);
@@ -175,7 +175,8 @@ export default function Products({
     }
   }
   function requestProductDelete(product) {
-    if (getRuntimeSettings().confirm_destructive_actions) setProductToDelete(product);
+    if (getRuntimeSettings().confirm_destructive_actions)
+      setProductToDelete(product);
     else removeProduct(product);
   }
   async function returnToList(refresh = false) {
@@ -263,37 +264,29 @@ export default function Products({
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => exportData("products", { warehouse_id: warehouseId, search: filters.search, status: filters.status, category_id: filters.category_id }).catch((reason) => setError(reason.message))}
-                    className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold"
-                  >
-                    <Download size={17} />
-                    {t("exportData")}
-                  </button>
+                  <ExportButton
+                    entity="products"
+                    query={{
+                      warehouse_id: warehouseId,
+                      search: filters.search,
+                      status: filters.status,
+                      category_id: filters.category_id,
+                    }}
+                    onError={setError}
+                  />
                   {canManage && (
-                    <button
-                      type="button"
-                      onClick={() => setExchangeEntity("products")}
-                      className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold"
-                    >
-                      <Upload size={17} />
+                    <Button icon={Upload} onClick={() => setExchangeOpen(true)}>
                       {t("importData")}
-                    </button>
+                    </Button>
                   )}
-                  {canManage && (
-                    <button
-                      type="button"
-                      onClick={() => setExchangeEntity("initial_stock")}
-                      className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold"
-                    >
-                      <Upload size={17} />
-                      {t("importInitialStock")}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    disabled={!selectedIds.length || selectedIds.some((id) => !selectedProducts[id]?.primary_barcode)}
+                  <Button
+                    icon={Printer}
+                    disabled={
+                      !selectedIds.length ||
+                      selectedIds.some(
+                        (id) => !selectedProducts[id]?.primary_barcode,
+                      )
+                    }
                     onClick={() =>
                       openLabels(
                         selectedIds
@@ -301,38 +294,31 @@ export default function Products({
                           .filter(Boolean),
                       )
                     }
-                    className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold disabled:opacity-40"
                   >
-                    <Printer size={17} />
                     {t("printLabels")} ({selectedIds.length})
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    icon={FolderCog}
                     onClick={() => setMode("categories")}
-                    className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold"
                   >
-                    <FolderCog size={17} />
                     {t("manageCategories")}
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    icon={Ruler}
                     onClick={() => setMode("units")}
-                    className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold"
                   >
-                    <Ruler size={17} />
                     {t("manageUnits")}
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="primary"
+                    icon={Plus}
                     onClick={() => {
                       setSelected(null);
                       setMode("form");
                     }}
-                    className="flex h-[42px] items-center gap-2 border border-[#087c1e] bg-[#099323] px-4 text-[13px] font-semibold text-white"
                   >
-                    <Plus size={18} />
                     {t("addProduct")}
-                  </button>
+                  </Button>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-3 border-b border-gray-200 bg-gray-50 p-4 md:grid-cols-2 xl:grid-cols-5">
@@ -459,10 +445,11 @@ export default function Products({
             setError={setError}
           />
           <DataExchangeDialog
-            open={Boolean(exchangeEntity)}
-            entity={exchangeEntity || "products"}
-            title={exchangeEntity === "initial_stock" ? t("importInitialStock") : t("importProducts")}
-            onClose={() => setExchangeEntity(null)}
+            open={exchangeOpen}
+            entity="products"
+            optionalSecondaryEntity="initial_stock"
+            title={t("importProducts")}
+            onClose={() => setExchangeOpen(false)}
             onImported={async () => {
               await loadLookups();
               await loadProducts();
@@ -473,13 +460,32 @@ export default function Products({
             title={t("deleteProduct")}
             onClose={() => !deletingProductId && setProductToDelete(null)}
             width="sm"
-            footer={<>
-              <button type="button" onClick={() => setProductToDelete(null)} disabled={Boolean(deletingProductId)} className="h-9 border border-gray-400 px-4 text-[12px] font-semibold disabled:opacity-50">{t("cancel")}</button>
-              <button type="button" onClick={() => removeProduct(productToDelete)} disabled={Boolean(deletingProductId)} className="h-9 border border-red-700 bg-red-700 px-4 text-[12px] font-semibold text-white disabled:opacity-50">{deletingProductId ? t("deleting") : t("delete")}</button>
-            </>}
+            footer={
+              <>
+                <button
+                  type="button"
+                  onClick={() => setProductToDelete(null)}
+                  disabled={Boolean(deletingProductId)}
+                  className="h-9 border border-gray-400 px-4 text-[12px] font-semibold disabled:opacity-50"
+                >
+                  {t("cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeProduct(productToDelete)}
+                  disabled={Boolean(deletingProductId)}
+                  className="h-9 border border-red-700 bg-red-700 px-4 text-[12px] font-semibold text-white disabled:opacity-50"
+                >
+                  {deletingProductId ? t("deleting") : t("delete")}
+                </button>
+              </>
+            }
           >
             <div className="p-5 text-[13px] leading-6 text-black/75">
-              {t("confirmDeleteProduct").replace("{product}", productToDelete?.designation || "")}
+              {t("confirmDeleteProduct").replace(
+                "{product}",
+                productToDelete?.designation || "",
+              )}
             </div>
           </Modal>
         </div>
@@ -606,7 +612,13 @@ function ProductsTable({
                 </td>
                 <td className="px-5 text-[13px] font-semibold">
                   <div className="flex items-center gap-2">
-                    {imagesEnabled && product.image_data && <img src={product.image_data} alt="" className="h-8 w-8 shrink-0 border border-gray-200 object-cover" />}
+                    {imagesEnabled && product.image_data && (
+                      <img
+                        src={product.image_data}
+                        alt=""
+                        className="h-8 w-8 shrink-0 border border-gray-200 object-cover"
+                      />
+                    )}
                     <span>{product.designation}</span>
                   </div>
                 </td>
@@ -627,9 +639,7 @@ function ProductsTable({
                     </span>
                   )}
                 </Td>
-                <Td>
-                  {formatMoney(product.selling_price)}
-                </Td>
+                <Td>{formatMoney(product.selling_price)}</Td>
                 <Td>
                   <Tracking product={product} t={t} />
                 </Td>
@@ -655,13 +665,32 @@ function ProductsTable({
                 </td>
                 <td className="whitespace-nowrap px-4 text-right rtl:text-left">
                   <div className="inline-flex items-center gap-2">
-                    <button type="button" disabled={!product.primary_barcode} onClick={() => onPrint(product)} title={product.primary_barcode ? t("printLabels") : t("Aucun code-barres")} className="inline-flex h-[30px] items-center justify-center border border-gray-400 px-3 text-[11px] font-semibold disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-black/30 disabled:opacity-60">
+                    <button
+                      type="button"
+                      disabled={!product.primary_barcode}
+                      onClick={() => onPrint(product)}
+                      title={
+                        product.primary_barcode
+                          ? t("printLabels")
+                          : t("Aucun code-barres")
+                      }
+                      className="inline-flex h-[30px] items-center justify-center border border-gray-400 px-3 text-[11px] font-semibold disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-black/30 disabled:opacity-60"
+                    >
                       <Printer size={15} />
                     </button>
-                    <button type="button" onClick={() => onDelete(product)} title={t("delete")} className="inline-flex h-[30px] items-center justify-center border border-red-400 px-3 text-[11px] font-semibold text-red-700 hover:bg-red-50">
+                    <button
+                      type="button"
+                      onClick={() => onDelete(product)}
+                      title={t("delete")}
+                      className="inline-flex h-[30px] items-center justify-center border border-red-400 px-3 text-[11px] font-semibold text-red-700 hover:bg-red-50"
+                    >
                       <Trash2 size={15} />
                     </button>
-                    <button type="button" onClick={() => onEdit(product.id)} className="inline-flex h-[30px] items-center justify-center border border-gray-400 px-3 text-[11px] font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => onEdit(product.id)}
+                      className="inline-flex h-[30px] items-center justify-center border border-gray-400 px-3 text-[11px] font-semibold"
+                    >
                       {t("edit")}
                     </button>
                     <button

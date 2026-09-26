@@ -5,6 +5,7 @@ export default function LegalBusinessFields({ values, onChange, t }) {
       {[
         ["taxId", "nif"],
         ["statisticalId", "nis"],
+        ["rib", "rib"],
         ["taxArticle", "tax_article"],
         ["commercialRegister", "commercial_register"],
       ].map(([label, name]) => (

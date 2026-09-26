@@ -53,6 +53,22 @@ try {
     assert.match(exported, /stock_quantity/);
     assert.doesNotMatch(exported, /Produit hors filtre impossible/);
 
+    const sqlCustomerName = `Client SQL ${stamp}`;
+    const customerSql = Exchange.template("customers", actor, "sql")
+      .replace("Client Démo SARL", sqlCustomerName)
+      .replace("0550000000", String(stamp).slice(-10));
+    const sqlPreview = Exchange.preview("customers", customerSql, actor, "sql");
+    assert.equal(sqlPreview.valid_count, 1);
+    assert.equal(Exchange.commit("customers", customerSql, "error", actor, "sql").created, 1);
+    const exportedSql = Exchange.exportSql("customers", { search: sqlCustomerName, status: "active" }, actor);
+    assert.match(exportedSql, /INSERT INTO "customers"/);
+    assert.match(exportedSql, new RegExp(sqlCustomerName));
+    assert.equal(Exchange.preview("customers", exportedSql, actor, "sql").valid_count, 1);
+    assert.throws(
+      () => Exchange.preview("customers", `${customerSql}\nDROP TABLE customers;`, actor, "sql"),
+      /Only INSERT statements/,
+    );
+
     for (const entity of [
       "sales",
       "stock",

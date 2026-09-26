@@ -622,7 +622,7 @@ function validatePayments(
 function hydrateSale(id) {
   const sale = db
     .prepare(
-      `SELECT s.*,w.name warehouse_name,w.phone warehouse_phone,w.address warehouse_address,w.nif warehouse_nif,w.nis warehouse_nis,w.tax_article warehouse_tax_article,w.commercial_register warehouse_commercial_register,c.name customer_name,cr.name cash_register_name,u.name created_by_name,u.name seller_name FROM sales s JOIN warehouses w ON w.id=s.warehouse_id LEFT JOIN customers c ON c.id=s.customer_id LEFT JOIN cash_registers cr ON cr.id=s.cash_register_id JOIN users u ON u.id=s.created_by WHERE s.id=?`,
+      `SELECT s.*,w.name warehouse_name,w.phone warehouse_phone,w.email warehouse_email,w.address warehouse_address,w.nif warehouse_nif,w.nis warehouse_nis,w.rib warehouse_rib,w.tax_article warehouse_tax_article,w.commercial_register warehouse_commercial_register,w.business_activity warehouse_business_activity,c.name customer_name,c.phone customer_phone,c.email customer_email,c.address customer_address,c.nif customer_nif,c.nis customer_nis,c.rib customer_rib,c.tax_article customer_tax_article,c.commercial_register customer_commercial_register,c.business_activity customer_business_activity,cr.name cash_register_name,u.name created_by_name,u.name seller_name FROM sales s JOIN warehouses w ON w.id=s.warehouse_id LEFT JOIN customers c ON c.id=s.customer_id LEFT JOIN cash_registers cr ON cr.id=s.cash_register_id JOIN users u ON u.id=s.created_by WHERE s.id=?`,
     )
     .get(id);
   if (!sale) return null;

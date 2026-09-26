@@ -1,9 +1,101 @@
 import { app, BrowserWindow, ipcMain, Menu } from "electron";
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import started from "electron-squirrel-startup";
+import { createLicensingService } from "./licensing/licenseService.mjs";
 app.setName("POS Modern");
 let apiProcess = null;
+let licensingService = null;
+let installationActivated = false;
+const LOCAL_API_URL = "http://127.0.0.1:3000";
+const CONNECTION_FILE = "connection.json";
+
+function connectionFilePath() {
+  return path.join(app.getPath("userData"), CONNECTION_FILE);
+}
+function normalizeApiUrl(value) {
+  let url;
+  try {
+    url = new URL(String(value || "").trim());
+  } catch {
+    throw new Error("API URL is invalid");
+  }
+  if (
+    !["http:", "https:"].includes(url.protocol) ||
+    url.username ||
+    url.password
+  )
+    throw new Error("API URL must use HTTP or HTTPS without credentials");
+  url.hash = "";
+  url.search = "";
+  url.pathname = url.pathname.replace(/\/+$/, "").replace(/\/api$/i, "");
+  return url.toString().replace(/\/$/, "");
+}
+function readConnectionConfig() {
+  const file = connectionFilePath();
+  if (!fs.existsSync(file)) return null;
+  try {
+    const value = JSON.parse(fs.readFileSync(file, "utf8"));
+    // Configurations created by the old automatic migration did not contain
+    // this marker. Ask the user once instead of silently forcing local mode.
+    if (value.configured !== true) return null;
+    if (value.mode === "local")
+      return { mode: "local", apiUrl: null, configured: true };
+    if (value.mode === "remote")
+      return {
+        mode: "remote",
+        apiUrl: normalizeApiUrl(value.apiUrl),
+        configured: true,
+      };
+  } catch (error) {
+    console.error("Invalid connection configuration", error);
+  }
+  return null;
+}
+function writeConnectionConfig(config) {
+  const file = connectionFilePath();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const temporary = `${file}.tmp`;
+  fs.writeFileSync(temporary, JSON.stringify(config, null, 2), "utf8");
+  fs.renameSync(temporary, file);
+}
+async function testApiConnection(apiUrl) {
+  const base = normalizeApiUrl(apiUrl);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
+  try {
+    const response = await fetch(`${base}/api/health`, {
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`API returned HTTP ${response.status}`);
+    const data = await response.json();
+    if (
+      data.product !== "modern-pos-api" ||
+      Number(data.protocol_version) !== 1
+    )
+      throw new Error("The server is not a compatible MODERN API");
+    return { ok: true, apiUrl: base, server: data };
+  } catch (error) {
+    if (error.name === "AbortError")
+      throw new Error("The API connection timed out");
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+async function waitForLocalApi() {
+  let lastError;
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    try {
+      return await testApiConnection(LOCAL_API_URL);
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  }
+  throw lastError || new Error("The local API did not start");
+}
 
 function startPackagedApi() {
   if (!app.isPackaged || apiProcess) return;
@@ -19,14 +111,85 @@ function startPackagedApi() {
     windowsHide: true,
     stdio: ["ignore", "pipe", "pipe"],
   });
-  apiProcess.stdout?.on("data", (chunk) => console.log(`[API] ${chunk.toString().trim()}`));
-  apiProcess.stderr?.on("data", (chunk) => console.error(`[API] ${chunk.toString().trim()}`));
-  apiProcess.on("error", (error) => console.error("POS Modern API failed to start", error));
+  apiProcess.stdout?.on("data", (chunk) =>
+    console.log(`[API] ${chunk.toString().trim()}`),
+  );
+  apiProcess.stderr?.on("data", (chunk) =>
+    console.error(`[API] ${chunk.toString().trim()}`),
+  );
+  apiProcess.on("error", (error) =>
+    console.error("POS Modern API failed to start", error),
+  );
   apiProcess.on("exit", (code) => {
     console.error(`POS Modern API stopped (exit code ${code}).`);
     apiProcess = null;
   });
 }
+function stopPackagedApi() {
+  apiProcess?.kill();
+  apiProcess = null;
+}
+
+function assertActivated() {
+  if (!installationActivated)
+    throw new Error("Software activation is required");
+}
+
+ipcMain.handle("get-connection-config", () => {
+  assertActivated();
+  return readConnectionConfig();
+});
+ipcMain.handle("test-api-connection", (_event, apiUrl) => {
+  assertActivated();
+  return testApiConnection(apiUrl);
+});
+ipcMain.handle("save-connection-config", async (_event, input) => {
+  assertActivated();
+  const mode = input?.mode === "remote" ? "remote" : "local";
+  const config =
+    mode === "remote"
+      ? { mode, apiUrl: normalizeApiUrl(input.apiUrl), configured: true }
+      : { mode, apiUrl: null, configured: true };
+  if (mode === "remote") await testApiConnection(config.apiUrl);
+  else {
+    const wasRunning = Boolean(apiProcess);
+    startPackagedApi();
+    try {
+      if (app.isPackaged) await waitForLocalApi();
+    } catch (error) {
+      if (!wasRunning) stopPackagedApi();
+      throw error;
+    }
+  }
+  writeConnectionConfig(config);
+  if (mode === "remote") stopPackagedApi();
+  return config;
+});
+ipcMain.handle("get-license-status", () => {
+  const result = licensingService?.validateLocalLicense() || {
+    valid: false,
+    reason: "unavailable",
+  };
+  installationActivated = result.valid;
+  return { valid: result.valid, reason: result.reason || null };
+});
+ipcMain.handle("activate-software", async (_event, code) => {
+  if (!licensingService) return { ok: false, code: "activation_unavailable" };
+  const result = await licensingService.activate(code);
+  if (!result.ok) return result;
+  installationActivated = true;
+  if (readConnectionConfig()?.mode === "local") {
+    startPackagedApi();
+    if (app.isPackaged) {
+      try {
+        await waitForLocalApi();
+      } catch (error) {
+        console.error("Local API did not become ready after activation", error);
+      }
+    }
+  }
+  return { ok: true };
+});
 import { buildSalePrintHtml } from "./utils/salePrintTemplate";
 import { buildBarcodeLabelsHtml } from "./utils/barcodeLabelTemplate";
 import { buildCommercialPrintHtml } from "./utils/commercialPrintTemplate";
@@ -102,6 +265,7 @@ async function barcodePrintDiagnostics(webContents, profile, options) {
 }
 
 ipcMain.handle("get-printers", async (event) => {
+  assertActivated();
   const printers = await event.sender.getPrintersAsync();
   return printers.map(
     ({ name, displayName, description, status, isDefault }) => ({
@@ -114,6 +278,7 @@ ipcMain.handle("get-printers", async (event) => {
   );
 });
 ipcMain.handle("print-sale", async (_event, { sale, profile }) => {
+  assertActivated();
   if (!sale?.sale_number) throw new Error("Sale document is invalid");
   if (profile?.paper_format === "NONE")
     return { printed: false, skipped: true };
@@ -157,6 +322,7 @@ ipcMain.handle("print-sale", async (_event, { sale, profile }) => {
   return { printed: true };
 });
 ipcMain.handle("print-barcode-labels", async (_event, { rows, profile }) => {
+  assertActivated();
   if (!Array.isArray(rows) || !rows.length)
     throw new Error("No barcode label selected");
   const html = buildBarcodeLabelsHtml(rows, profile),
@@ -192,6 +358,7 @@ ipcMain.handle("print-barcode-labels", async (_event, { rows, profile }) => {
   };
 });
 ipcMain.handle("print-document", async (_event, { document, profile }) => {
+  assertActivated();
   const number =
     document?.invoice_number ||
     document?.delivery_number ||
@@ -237,16 +404,19 @@ if (started) {
   app.quit();
 }
 
-const createWindow = () => {
+const createWindow = (activated = installationActivated) => {
+  const needsConnectionSetup = !readConnectionConfig();
+  const initialWidth = !activated ? 620 : needsConnectionSetup ? 680 : 460;
+  const initialHeight = !activated ? 680 : needsConnectionSetup ? 720 : 560;
   const mainWindow = new BrowserWindow({
-    width: 460,
-    height: 560,
+    width: initialWidth,
+    height: initialHeight,
 
-    minWidth: 460,
-    minHeight: 560,
+    minWidth: initialWidth,
+    minHeight: initialHeight,
 
-    maxWidth: 460,
-    maxHeight: 560,
+    maxWidth: initialWidth,
+    maxHeight: initialHeight,
 
     resizable: false,
     maximizable: false,
@@ -254,8 +424,8 @@ const createWindow = () => {
     center: true,
     show: false,
     icon: app.isPackaged
-      ? path.join(process.resourcesPath, "app-icon.png")
-      : path.join(app.getAppPath(), "build-assets", "app-icon.png"),
+      ? path.join(process.resourcesPath, "pos-modern.ico")
+      : path.join(app.getAppPath(), "pos-modern.ico"),
 
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -271,6 +441,9 @@ const createWindow = () => {
   //  Shrink main window
   ipcMain.on("close-main-window", () => {
     shrinkToLoginWindow(mainWindow);
+  });
+  ipcMain.on("open-connection-window", () => {
+    showConnectionWindow(mainWindow);
   });
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -288,8 +461,14 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
-  startPackagedApi();
-  createWindow();
+  licensingService = createLicensingService({
+    userDataPath: app.getPath("userData"),
+    appVersion: app.getVersion(),
+  });
+  installationActivated = licensingService.validateLocalLicense().valid;
+  if (installationActivated && readConnectionConfig()?.mode === "local")
+    startPackagedApi();
+  createWindow(installationActivated);
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -299,8 +478,7 @@ app.whenReady().then(() => {
 });
 
 app.on("before-quit", () => {
-  apiProcess?.kill();
-  apiProcess = null;
+  stopPackagedApi();
 });
 
 app.on("window-all-closed", () => {
@@ -329,5 +507,15 @@ const shrinkToLoginWindow = (mainWindow) => {
   mainWindow.setMaximizable(false);
 
   mainWindow.setSize(460, 560);
+  mainWindow.center();
+};
+
+const showConnectionWindow = (mainWindow) => {
+  mainWindow.unmaximize();
+  mainWindow.setMinimumSize(680, 720);
+  mainWindow.setMaximumSize(680, 720);
+  mainWindow.setResizable(false);
+  mainWindow.setMaximizable(false);
+  mainWindow.setSize(680, 720);
   mainWindow.center();
 };

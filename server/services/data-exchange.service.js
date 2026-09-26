@@ -12,15 +12,15 @@ class ExchangeError extends Error {
 }
 const entities = {
   products: ["designation", "reference", "category", "unit", "purchase_price", "selling_price", "min_stock", "track_stock", "track_serials", "track_batches", "track_expiration", "active"],
-  customers: ["name", "phone", "email", "nif", "nis", "tax_article", "commercial_register", "address", "business_activity", "opening_balance", "active"],
-  suppliers: ["name", "phone", "email", "nif", "nis", "tax_article", "commercial_register", "address", "business_activity", "opening_balance", "active"],
+  customers: ["name", "phone", "email", "nif", "nis", "rib", "tax_article", "commercial_register", "address", "business_activity", "opening_balance", "active"],
+  suppliers: ["name", "phone", "email", "nif", "nis", "rib", "tax_article", "commercial_register", "address", "business_activity", "opening_balance", "active"],
   initial_stock: ["product_reference", "warehouse", "quantity", "serial_numbers", "batch_number", "expiration_date", "purchase_price"],
 };
 const aliases = {
   designation: ["designation", "désignation", "produit"], reference: ["reference", "référence"], category: ["category", "catégorie"], unit: ["unit", "unité"],
   purchase_price: ["purchase_price", "prix_achat"], selling_price: ["selling_price", "prix_vente"], min_stock: ["min_stock", "stock_minimum"],
   track_stock: ["track_stock", "suivi_stock"], track_serials: ["track_serials", "suivi_séries"], track_batches: ["track_batches", "suivi_lots"], track_expiration: ["track_expiration", "suivi_péremption"],
-  active: ["active", "actif"], name: ["name", "nom"], phone: ["phone", "téléphone"], email: ["email", "e-mail"], nif: ["nif"], nis: ["nis"], tax_article: ["tax_article", "article_imposition"], commercial_register: ["commercial_register", "rc"], address: ["address", "adresse"], business_activity: ["business_activity", "activité"], opening_balance: ["opening_balance", "solde_initial"],
+  active: ["active", "actif"], name: ["name", "nom"], phone: ["phone", "téléphone"], email: ["email", "e-mail"], nif: ["nif"], nis: ["nis"], rib: ["rib", "bank_account"], tax_article: ["tax_article", "article_imposition"], commercial_register: ["commercial_register", "rc"], address: ["address", "adresse"], business_activity: ["business_activity", "activité"], opening_balance: ["opening_balance", "solde_initial"],
   product_reference: ["product_reference", "référence_produit"], warehouse: ["warehouse", "entrepôt"], quantity: ["quantity", "quantité"], serial_numbers: ["serial_numbers", "numéros_série"], batch_number: ["batch_number", "lot"], expiration_date: ["expiration_date", "péremption"],
 };
 function canManage(user) { if (!["admin", "manager"].includes(user?.role)) throw new ExchangeError("Import is restricted to administrators and managers", 403); }
@@ -45,9 +45,54 @@ function csvRows(content) {
   row.push(cell.trim()); if (row.some((value) => value !== "")) rows.push(row);
   return rows;
 }
-function normalizedRows(entity, content) {
+function splitSqlValues(source) {
+  const values = [];
+  let value = "", quoted = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index], next = source[index + 1];
+    if (char === "'" && quoted && next === "'") { value += "''"; index += 1; }
+    else if (char === "'") { quoted = !quoted; value += char; }
+    else if (char === "," && !quoted) { values.push(value.trim()); value = ""; }
+    else value += char;
+  }
+  if (quoted) throw new ExchangeError("The SQL file contains an unterminated string");
+  values.push(value.trim());
+  return values;
+}
+function sqlValue(value) {
+  const text = String(value || "").trim();
+  if (/^null$/i.test(text)) return "";
+  if (/^'(?:''|[^'])*'$/.test(text)) return text.slice(1, -1).replace(/''/g, "'");
+  if (/^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(text)) return text;
+  throw new ExchangeError("The SQL import accepts only literal INSERT values");
+}
+function sqlMatrix(entity, content) {
+  const text = String(content || "").replace(/^\uFEFF/, "");
+  if (!text.trim()) throw new ExchangeError("The SQL file is empty");
+  const pattern = /INSERT\s+INTO\s+(?:"([^"]+)"|`([^`]+)`|\[([^\]]+)\]|([A-Za-z_][\w]*))\s*\(([^)]+)\)\s*VALUES\s*\(((?:[^';]|'(?:''|[^'])*)*)\)\s*;/gi;
+  const statements = [];
+  let match;
+  while ((match = pattern.exec(text))) {
+    const table = match[1] || match[2] || match[3] || match[4];
+    if (key(table) !== key(entity)) throw new ExchangeError(`SQL table ${table} does not match import type ${entity}`);
+    const columns = match[5].split(",").map((column) => column.trim().replace(/^["`\[]|["`\]]$/g, ""));
+    const values = splitSqlValues(match[6]).map(sqlValue);
+    if (columns.length !== values.length) throw new ExchangeError("SQL INSERT columns and values do not match");
+    statements.push({ columns, values, source: match[0] });
+  }
+  const remainder = statements.reduce((value, statement) => value.replace(statement.source, ""), text)
+    .replace(/--[^\r\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "").trim();
+  if (remainder || !statements.length) throw new ExchangeError("Only INSERT statements generated by POS Modern are supported");
+  const headers = [...new Set(statements.flatMap((statement) => statement.columns))];
+  return [headers, ...statements.map((statement) => headers.map((header) => {
+    const index = statement.columns.findIndex((column) => key(column) === key(header));
+    return index < 0 ? "" : statement.values[index];
+  }))];
+}
+function normalizedRows(entity, content, format = "csv") {
   const expected = entities[entity]; if (!expected) throw new ExchangeError("Unsupported import type", 404);
-  const matrix = csvRows(content), rawHeaders = matrix.shift() || [];
+  const selectedFormat = format === "sql" || (/^\s*(?:--[^\n]*\n\s*)*INSERT\s+/i.test(String(content || ""))) ? "sql" : "csv";
+  const matrix = selectedFormat === "sql" ? sqlMatrix(entity, content) : csvRows(content), rawHeaders = matrix.shift() || [];
   const headerMap = new Map();
   rawHeaders.forEach((header, index) => {
     const normalized = key(header);
@@ -106,9 +151,9 @@ function validateReferences(entity, row, user) {
   } catch (error) { errors.push(error.message); }
   return errors;
 }
-function preview(entity, content, user) {
+function preview(entity, content, user, format = "csv") {
   canManage(user);
-  const rows = normalizedRows(entity, content).map((row) => {
+  const rows = normalizedRows(entity, content, format).map((row) => {
     const validated = validateRow(entity, row);
     if (!validated.errors.length) validated.errors.push(...validateReferences(entity, validated.row, user));
     return validated;
@@ -162,13 +207,13 @@ const commitTransaction = db.transaction((entity, rows, policy, user) => {
   }
   return summary;
 });
-function commit(entity, content, policy, user) { canManage(user); if (!["error", "skip", "update"].includes(policy)) throw new ExchangeError("Duplicate policy is invalid"); const rows = normalizedRows(entity, content); const result = commitTransaction(entity, rows, policy, user); return { entity, total: rows.length, ...result }; }
-function template(entity, user) { canManage(user); if (!entities[entity]) throw new ExchangeError("Unsupported import type", 404); const example = { products: ["Clavier USB fictif","TECH-001","Périphériques","Unité","1500","2200","3","oui","non","non","non","oui"], customers: ["Client Démo SARL","0550000000","client@example.test","000000000000000","","","","Adresse fictive","Commerce","0","oui"], suppliers: ["Fournisseur Démo SARL","0550000001","supplier@example.test","000000000000001","","","","Adresse fictive","Distribution","0","oui"], initial_stock: ["TECH-001","Entrepôt principal","10","","","","1500"] }[entity]; return `${entities[entity].join(";")}\r\n${example.join(";")}\r\n`; }
+function commit(entity, content, policy, user, format = "csv") { canManage(user); if (!["error", "skip", "update"].includes(policy)) throw new ExchangeError("Duplicate policy is invalid"); const rows = normalizedRows(entity, content, format); const result = commitTransaction(entity, rows, policy, user); return { entity, total: rows.length, ...result }; }
+function template(entity, user, format = "csv") { canManage(user); if (!entities[entity]) throw new ExchangeError("Unsupported import type", 404); const example = { products: ["Clavier USB fictif","TECH-001","Périphériques","Unité","1500","2200","3","oui","non","non","non","oui"], customers: ["Client Démo SARL","0550000000","client@example.test","000000000000000","","00799999000000000001","","","Adresse fictive","Commerce","0","oui"], suppliers: ["Fournisseur Démo SARL","0550000001","supplier@example.test","000000000000001","","00799999000000000002","","","Adresse fictive","Distribution","0","oui"], initial_stock: ["TECH-001","Entrepôt principal","10","","","","1500"] }[entity]; if (format === "sql") return sqlDocument(entity, entities[entity], [Object.fromEntries(entities[entity].map((column, index) => [column, example[index]]))]); return `${entities[entity].join(";")}\r\n${example.join(";")}\r\n`; }
 const exportQueries = {
   products: `SELECT p.reference,p.designation,c.name category,u.name unit,pu.purchase_price,pu.selling_price,p.min_stock,p.track_stock,p.track_serials,p.track_batches,p.track_expiration,p.is_active active,COALESCE((SELECT SUM(ps.quantity) FROM product_stock ps WHERE ps.product_id=p.id AND (@warehouse IS NULL OR ps.warehouse_id=@warehouse)),0) stock_quantity FROM products p LEFT JOIN categories c ON c.id=p.category_id JOIN product_units pu ON pu.product_id=p.id AND pu.is_base=1 JOIN units u ON u.id=pu.unit_id WHERE (@search='' OR p.designation LIKE @searchLike OR COALESCE(p.reference,'') LIKE @searchLike) AND (@activeStatus='all' OR p.is_active=CASE @activeStatus WHEN 'active' THEN 1 ELSE 0 END) AND (@category IS NULL OR p.category_id=@category) ORDER BY p.designation`,
   stock: `SELECT w.name warehouse,p.reference,p.designation,c.name category,u.name unit,ROUND(COALESCE(ps.quantity,0),3) quantity,p.min_stock,CASE WHEN p.track_stock=0 THEN 'NOT_TRACKED' WHEN COALESCE(ps.quantity,0)<=0 THEN 'OUT' WHEN p.min_stock>0 AND COALESCE(ps.quantity,0)<=p.min_stock THEN 'LOW' ELSE 'OK' END stock_status FROM products p JOIN warehouses w ON w.is_active=1 AND (@warehouse IS NULL OR w.id=@warehouse) LEFT JOIN product_stock ps ON ps.product_id=p.id AND ps.warehouse_id=w.id LEFT JOIN categories c ON c.id=p.category_id JOIN product_units pu ON pu.product_id=p.id AND pu.is_base=1 JOIN units u ON u.id=pu.unit_id WHERE p.is_active=1 AND (@search='' OR p.designation LIKE @searchLike OR COALESCE(p.reference,'') LIKE @searchLike) AND (@documentStatus='' OR @documentStatus='all' OR (@documentStatus='attention' AND p.track_stock=1 AND p.min_stock>0 AND COALESCE(ps.quantity,0)<=p.min_stock) OR (@documentStatus='low' AND p.track_stock=1 AND COALESCE(ps.quantity,0)>0 AND COALESCE(ps.quantity,0)<=p.min_stock) OR (@documentStatus='out' AND p.track_stock=1 AND COALESCE(ps.quantity,0)<=0) OR (@documentStatus='expired' AND p.track_stock=1 AND EXISTS(SELECT 1 FROM stock_batches sb WHERE sb.product_id=p.id AND sb.warehouse_id=w.id AND sb.quantity>0 AND sb.expiration_date<date('now'))) OR (@documentStatus='expiring' AND p.track_stock=1 AND EXISTS(SELECT 1 FROM stock_batches sb WHERE sb.product_id=p.id AND sb.warehouse_id=w.id AND sb.quantity>0 AND sb.expiration_date BETWEEN date('now') AND date('now',@warningModifier)))) ORDER BY p.designation,w.name`,
-  customers: `SELECT name,phone,email,nif,nis,tax_article,commercial_register,address,business_activity,opening_balance,is_active active FROM customers WHERE (@search='' OR name LIKE @searchLike OR COALESCE(phone,'') LIKE @searchLike) AND (@activeStatus='all' OR is_active=CASE @activeStatus WHEN 'active' THEN 1 ELSE 0 END) ORDER BY name`,
-  suppliers: `SELECT name,phone,email,nif,nis,tax_article,commercial_register,address,business_activity,opening_balance,is_active active FROM suppliers WHERE (@search='' OR name LIKE @searchLike OR COALESCE(phone,'') LIKE @searchLike) AND (@activeStatus='all' OR is_active=CASE @activeStatus WHEN 'active' THEN 1 ELSE 0 END) ORDER BY name`,
+  customers: `SELECT name,phone,email,nif,nis,rib,tax_article,commercial_register,address,business_activity,opening_balance,is_active active FROM customers WHERE (@search='' OR name LIKE @searchLike OR COALESCE(phone,'') LIKE @searchLike OR COALESCE(rib,'') LIKE @searchLike) AND (@activeStatus='all' OR is_active=CASE @activeStatus WHEN 'active' THEN 1 ELSE 0 END) ORDER BY name`,
+  suppliers: `SELECT name,phone,email,nif,nis,rib,tax_article,commercial_register,address,business_activity,opening_balance,is_active active FROM suppliers WHERE (@search='' OR name LIKE @searchLike OR COALESCE(phone,'') LIKE @searchLike OR COALESCE(rib,'') LIKE @searchLike) AND (@activeStatus='all' OR is_active=CASE @activeStatus WHEN 'active' THEN 1 ELSE 0 END) ORDER BY name`,
   sales: `SELECT s.sale_number,s.sale_date,c.name customer,s.document_type,s.fulfillment_type,s.total,s.payment_status,s.return_status FROM sales s LEFT JOIN customers c ON c.id=s.customer_id WHERE (@warehouse IS NULL OR s.warehouse_id=@warehouse) AND (@search='' OR s.sale_number LIKE @searchLike OR COALESCE(c.name,'') LIKE @searchLike) AND (@fromDate='' OR date(s.sale_date)>=date(@fromDate)) AND (@toDate='' OR date(s.sale_date)<=date(@toDate)) AND (@customer IS NULL OR s.customer_id=@customer) AND (@paymentMethod='' OR EXISTS(SELECT 1 FROM sale_payments sp WHERE sp.sale_id=s.id AND sp.payment_method_code=@paymentMethod)) ORDER BY s.sale_date DESC,s.id DESC`,
   quotes: `SELECT q.quote_number,q.quote_date,q.valid_until,c.name customer,q.total,q.status FROM quotes q LEFT JOIN customers c ON c.id=q.customer_id WHERE (@warehouse IS NULL OR q.warehouse_id=@warehouse) AND (@search='' OR q.quote_number LIKE @searchLike OR COALESCE(c.name,'') LIKE @searchLike) AND (@fromDate='' OR date(q.quote_date)>=date(@fromDate)) AND (@toDate='' OR date(q.quote_date)<=date(@toDate)) AND (@documentStatus='' OR q.status=@documentStatus) ORDER BY q.quote_date DESC,q.id DESC`,
   purchase_orders: `SELECT o.order_number,o.order_date,s.name supplier,o.status,COALESCE((SELECT SUM(l.total) FROM purchase_order_lines l WHERE l.purchase_order_id=o.id),0) total FROM purchase_orders o JOIN suppliers s ON s.id=o.supplier_id WHERE (@warehouse IS NULL OR o.warehouse_id=@warehouse) AND (@search='' OR o.order_number LIKE @searchLike OR s.name LIKE @searchLike) AND (@fromDate='' OR date(o.order_date)>=date(@fromDate)) AND (@toDate='' OR date(o.order_date)<=date(@toDate)) AND (@documentStatus='' OR o.status=@documentStatus) ORDER BY o.order_date DESC,o.id DESC`,
@@ -180,6 +225,12 @@ const exportQueries = {
   stock_movements: `SELECT m.created_at,w.name warehouse,p.reference,p.designation,m.type,m.quantity,m.reference_type,m.reference_id,m.note FROM stock_movements m JOIN products p ON p.id=m.product_id JOIN warehouses w ON w.id=m.warehouse_id WHERE (@warehouse IS NULL OR m.warehouse_id=@warehouse) AND (@search='' OR p.designation LIKE @searchLike OR COALESCE(p.reference,'') LIKE @searchLike) AND (@documentStatus='' OR m.type=@documentStatus) AND (@fromDate='' OR date(m.created_at)>=date(@fromDate)) AND (@toDate='' OR date(m.created_at)<=date(@toDate)) ORDER BY m.created_at DESC,m.id DESC`,
 };
 function escapeCsv(value) { return `"${String(value ?? "").replace(/"/g, '""')}"`; }
+function escapeSql(value) { return value == null ? "NULL" : `'${String(value).replace(/'/g, "''")}'`; }
+function sqlDocument(entity, columns, rows) {
+  const identifiers = columns.map((column) => `"${String(column).replace(/"/g, '""')}"`).join(", ");
+  const statements = rows.map((row) => `INSERT INTO "${entity}" (${identifiers}) VALUES (${columns.map((column) => escapeSql(row[column])).join(", ")});`);
+  return [`-- POS Modern SQL data exchange: ${entity}`, "-- Import this file through POS Modern; do not execute it directly.", ...statements].join("\r\n");
+}
 function reportCsv(query, user) {
   const data = require("./analytics.service").report(query, user);
   const rows = [
@@ -239,4 +290,13 @@ function exportCsv(entity, query, user) {
     ...rows.map((row) => columns.map((column) => escapeCsv(row[column])).join(";")),
   ].join("\r\n");
 }
-module.exports = { ExchangeError, preview, commit, template, exportCsv };
+function exportSql(entity, query, user) {
+  if (entity === "report") throw new ExchangeError("SQL export is unavailable for reports", 400);
+  const csv = exportCsv(entity, query, user);
+  if (!csv.trim()) return sqlDocument(entity, [], []);
+  const matrix = csvRows(csv);
+  const columns = matrix.shift() || [];
+  const rows = matrix.map((values) => Object.fromEntries(columns.map((column, index) => [column, values[index] ?? ""])));
+  return sqlDocument(entity, columns, rows);
+}
+module.exports = { ExchangeError, preview, commit, template, exportCsv, exportSql };

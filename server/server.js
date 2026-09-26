@@ -31,6 +31,14 @@ require("./database/migrations/init");
 
 app.use(cors());
 app.use(express.json({ limit: "25mb" }));
+app.get("/api/health", (_req, res) =>
+  res.json({
+    product: "modern-pos-api",
+    protocol_version: 1,
+    version: "1.0.0",
+    status: "ok",
+  }),
+);
 // routes
 app.use("/api/auth", authRoutes);
 app.use("/api/warehouses", warehouseRoutes);

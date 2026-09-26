@@ -1,7 +1,7 @@
 {
   "name": "pos-modern",
   "productName": "POS Modern",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
   "private": true,
@@ -11,7 +11,8 @@
     "make": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/make-installer.ps1",
     "publish": "electron-forge publish",
     "build": "vite build",
-    "test": "npm --prefix server test",
+    "test": "npm --prefix server test && node --test tests/licensing.test.mjs",
+    "test:licensing": "node --test tests/licensing.test.mjs",
     "lint": "node scripts/check-sources.js",
     "i18n:check": "node scripts/audit-translations.js --check && node scripts/audit-server-errors.js --check"
   },

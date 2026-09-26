@@ -7,6 +7,7 @@ function create(data) {
     email,
     nif,
     nis,
+    rib,
     tax_article,
     commercial_register,
     address,
@@ -24,6 +25,7 @@ function create(data) {
         email,
         nif,
         nis,
+        rib,
         tax_article,
         commercial_register,
         address,
@@ -31,7 +33,7 @@ function create(data) {
         can_sell,
         is_active
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     )
     .run(
@@ -40,6 +42,7 @@ function create(data) {
       email || null,
       nif || null,
       nis || null,
+      rib || null,
       tax_article || null,
       commercial_register || null,
       address || null,
@@ -62,6 +65,7 @@ function findAll() {
         email,
         nif,
         nis,
+        rib,
         tax_article,
         commercial_register,
         address,
@@ -87,6 +91,7 @@ function findById(id) {
         email,
         nif,
         nis,
+        rib,
         tax_article,
         commercial_register,
         address,
@@ -108,6 +113,7 @@ function update(id, data) {
     email,
     nif,
     nis,
+    rib,
     tax_article,
     commercial_register,
     address,
@@ -126,6 +132,7 @@ function update(id, data) {
         email = ?,
         nif = ?,
         nis = ?,
+        rib = ?,
         tax_article = ?,
         commercial_register = ?,
         address = ?,
@@ -141,6 +148,7 @@ function update(id, data) {
       email || null,
       nif || null,
       nis || null,
+      rib || null,
       tax_article || null,
       commercial_register || null,
       address || null,

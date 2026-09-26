@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  Download,
   Plus,
   Search,
   Trash2,
@@ -22,8 +21,9 @@ import CustomerForm from "./CustomerForm";
 import useDebouncedValue from "../../hooks/useDebouncedValue";
 import { formatMoney } from "../../utils/formatters";
 import DataExchangeDialog from "../../components/data-exchange/DataExchangeDialog";
-import { exportData } from "../../api/data-exchange.model";
+import ExportButton from "../../components/data-exchange/ExportButton";
 import { getRuntimeSettings } from "../../utils/runtimeSettings";
+import Button from "../../components/ui/Button";
 const defaults = () => ({ search: "", status: "active", page: 1, limit: Number(getRuntimeSettings().default_page_size || 25) });
 export default function Customers({ session }) {
   const { t, language } = useLanguage(),
@@ -123,33 +123,24 @@ export default function Customers({ session }) {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => exportData("customers", { search: filters.search, status: filters.status }).catch((reason) => setError(reason.message))}
-                    className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold"
-                  >
-                    <Download size={17} />
-                    {t("exportData")}
-                  </button>
+                  <ExportButton entity="customers" query={{ search: filters.search, status: filters.status }} onError={setError} />
                 {canManage && (<>
-                  <button
-                    type="button"
+                  <Button
+                    icon={Upload}
                     onClick={() => setExchangeOpen(true)}
-                    className="flex h-[42px] items-center gap-2 border border-gray-400 px-3 text-[12px] font-semibold"
                   >
-                    <Upload size={17} />
                     {t("importData")}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="primary"
+                    icon={Plus}
                     onClick={() => {
                       setSelected(null);
                       setMode("form");
                     }}
-                    className="flex h-[42px] items-center gap-2 border border-[#087c1e] bg-[#099323] px-4 text-[13px] font-semibold text-white"
                   >
-                    <Plus size={18} />
                     {t("addCustomer")}
-                  </button>
+                  </Button>
                 </>)}
                 </div>
               </div>

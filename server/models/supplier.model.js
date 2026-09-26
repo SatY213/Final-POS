@@ -1,6 +1,6 @@
 const db = require("../config/database");
 
-const fields = `s.id,s.name,s.phone,s.email,s.nif,s.nis,s.tax_article,
+const fields = `s.id,s.name,s.phone,s.email,s.nif,s.nis,s.rib,s.tax_article,
   s.commercial_register,s.address,s.business_activity,s.opening_balance,
   s.opening_balance + COALESCE((SELECT SUM(e.amount) FROM supplier_account_entries e WHERE e.supplier_id=s.id),0) current_balance,
   s.is_active,s.created_at,s.updated_at`;
@@ -13,7 +13,7 @@ function findPage(filters) {
   const conditions = [];
   if (filters.search) {
     conditions.push(
-      "(s.name LIKE @search COLLATE NOCASE OR s.phone LIKE @search COLLATE NOCASE OR s.email LIKE @search COLLATE NOCASE OR s.nif LIKE @search COLLATE NOCASE OR s.nis LIKE @search COLLATE NOCASE OR s.commercial_register LIKE @search COLLATE NOCASE)",
+      "(s.name LIKE @search COLLATE NOCASE OR s.phone LIKE @search COLLATE NOCASE OR s.email LIKE @search COLLATE NOCASE OR s.nif LIKE @search COLLATE NOCASE OR s.nis LIKE @search COLLATE NOCASE OR s.rib LIKE @search COLLATE NOCASE OR s.commercial_register LIKE @search COLLATE NOCASE)",
     );
     params.search = `%${filters.search}%`;
   }
@@ -78,7 +78,7 @@ function findById(id) {
 function create(data) {
   const result = db
     .prepare(
-      "INSERT INTO suppliers(name,phone,email,nif,nis,tax_article,commercial_register,address,business_activity,opening_balance,is_active) VALUES(@name,@phone,@email,@nif,@nis,@tax_article,@commercial_register,@address,@business_activity,@opening_balance,@is_active)",
+      "INSERT INTO suppliers(name,phone,email,nif,nis,rib,tax_article,commercial_register,address,business_activity,opening_balance,is_active) VALUES(@name,@phone,@email,@nif,@nis,@rib,@tax_article,@commercial_register,@address,@business_activity,@opening_balance,@is_active)",
     )
     .run({ ...data, is_active: +data.is_active });
   return findById(result.lastInsertRowid);
@@ -87,7 +87,7 @@ function create(data) {
 function update(id, data) {
   const result = db
     .prepare(
-      "UPDATE suppliers SET name=@name,phone=@phone,email=@email,nif=@nif,nis=@nis,tax_article=@tax_article,commercial_register=@commercial_register,address=@address,business_activity=@business_activity,opening_balance=@opening_balance,is_active=@is_active,updated_at=CURRENT_TIMESTAMP WHERE id=@id",
+      "UPDATE suppliers SET name=@name,phone=@phone,email=@email,nif=@nif,nis=@nis,rib=@rib,tax_article=@tax_article,commercial_register=@commercial_register,address=@address,business_activity=@business_activity,opening_balance=@opening_balance,is_active=@is_active,updated_at=CURRENT_TIMESTAMP WHERE id=@id",
     )
     .run({ id, ...data, is_active: +data.is_active });
   return result.changes ? findById(id) : null;

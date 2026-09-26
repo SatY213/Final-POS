@@ -3,8 +3,38 @@ import {
   getAuthToken,
 } from "../utils/session.js";
 
-const API_URL = "http://localhost:3000";
+const LOCAL_API_URL = "http://127.0.0.1:3000";
+let connectionConfig;
 export const AUTH_EXPIRED_EVENT = "pos:auth-expired";
+
+export function normalizeApiUrl(value) {
+  let url;
+  try { url = new URL(String(value || "").trim()); }
+  catch { throw new Error("API URL is invalid"); }
+  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password)
+    throw new Error("API URL must use HTTP or HTTPS without credentials");
+  url.hash = "";
+  url.search = "";
+  url.pathname = url.pathname.replace(/\/+$/, "").replace(/\/api$/i, "");
+  return url.toString().replace(/\/$/, "");
+}
+export function setConnectionConfig(value) {
+  connectionConfig = value?.mode === "remote"
+    ? { mode: "remote", apiUrl: normalizeApiUrl(value.apiUrl) }
+    : value
+      ? { mode: "local", apiUrl: null }
+      : null;
+  return connectionConfig;
+}
+export async function loadConnectionConfig() {
+  if (connectionConfig !== undefined) return connectionConfig;
+  const value = await window.electronAPI?.getConnectionConfig?.();
+  return setConnectionConfig(value || null);
+}
+export async function getApiBaseUrl() {
+  const config = await loadConnectionConfig();
+  return config?.mode === "remote" ? config.apiUrl : LOCAL_API_URL;
+}
 
 export function toQuery(values = {}) {
   return new URLSearchParams(
@@ -13,12 +43,13 @@ export function toQuery(values = {}) {
 }
 
 export async function apiRequest(path, { auth = true, body, ...options } = {}) {
+  const apiUrl = await getApiBaseUrl();
   const token = auth ? getAuthToken() : null;
   const headers = {
     ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
     ...(auth ? { Authorization: `Bearer ${token}` } : {}),
   };
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${apiUrl}${path}`, {
     ...options,
     headers: { ...headers, ...options.headers },
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
@@ -40,6 +71,11 @@ export async function apiRequest(path, { auth = true, body, ...options } = {}) {
     throw error;
   }
   return data;
+}
+
+export async function apiRaw(path, options = {}) {
+  const apiUrl = await getApiBaseUrl();
+  return fetch(`${apiUrl}${path}`, options);
 }
 
 export const apiGet = (path, options) => apiRequest(path, { ...options, method: "GET" });

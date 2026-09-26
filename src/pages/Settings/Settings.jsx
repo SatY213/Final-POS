@@ -12,6 +12,7 @@ import {
   Users,
   Wallet,
   Warehouse,
+  Server,
 } from "lucide-react";
 
 import WarehousesTab from "./tabs/warehouses/WarehousesTab";
@@ -24,6 +25,7 @@ import ConfigurationTabs, {
 import PrintingTab from "./tabs/printing/PrintingTab";
 import GeneralTab from "./tabs/general/GeneralTab";
 import BackupTab from "./tabs/backup/BackupTab";
+import ConnectionTab from "./tabs/connection/ConnectionTab";
 import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function Settings() {
@@ -114,6 +116,11 @@ export default function Settings() {
             id: "language",
             label: t("language"),
             icon: Languages,
+          },
+          {
+            id: "connection",
+            label: t("connectionServer"),
+            icon: Server,
           },
           {
             id: "backup",
@@ -270,6 +277,8 @@ function SettingsContent({ activeTab, t }) {
 
     case "backup":
       return <BackupTab />;
+    case "connection":
+      return <ConnectionTab />;
 
     default:
       return null;
@@ -289,6 +298,7 @@ function getTabHint(activeTab, t) {
     general: t("settingsHintGeneral"),
     language: t("settingsHintLanguage"),
     backup: t("settingsHintBackup"),
+    connection: t("settingsHintConnection"),
   };
 
   return hints[activeTab] || t("settingsDescription");

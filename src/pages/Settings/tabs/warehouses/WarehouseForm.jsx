@@ -13,6 +13,7 @@ const emptyForm = {
   email: "",
   nif: "",
   nis: "",
+  rib: "",
   tax_article: "",
   commercial_register: "",
   address: "",
@@ -37,6 +38,7 @@ export function WarehouseForm({ warehouse = null, onSaved, onCancel }) {
         email: warehouse.email || "",
         nif: warehouse.nif || "",
         nis: warehouse.nis || "",
+        rib: warehouse.rib || "",
         tax_article: warehouse.tax_article || "",
         commercial_register: warehouse.commercial_register || "",
         address: warehouse.address || "",
@@ -178,6 +180,13 @@ export function WarehouseForm({ warehouse = null, onSaved, onCancel }) {
           label={t("statisticalId")}
           name="nis"
           value={formData.nis}
+          onChange={handleChange}
+        />
+
+        <Field
+          label={t("rib")}
+          name="rib"
+          value={formData.rib}
           onChange={handleChange}
         />
 

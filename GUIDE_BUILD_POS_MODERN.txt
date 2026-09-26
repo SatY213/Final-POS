@@ -1,0 +1,299 @@
+======================================================================
+                 GUIDE DE BUILD — POS MODERN
+======================================================================
+
+Projet source : C:\Users\abdel\Desktop\Final POS
+
+Ce document explique comment compiler POS Modern et le rôle des dossiers
+dist, out, build-install, build-runtime, build-assets et build-demo.
+
+
+1. PRÉREQUIS
+======================================================================
+
+Le projet utilise actuellement deux versions de Node.js pendant la création
+du package Windows :
+
+- Node.js 26 : prépare le serveur local et le module natif better-sqlite3.
+- Node.js 20 : exécute Electron Forge et fabrique le package/installateur.
+
+Le script scripts\make-installer.ps1 cherche automatiquement ces versions
+dans NVM_HOME ou dans %APPDATA%\nvm. Il n'est donc normalement pas nécessaire
+de changer manuellement de version pendant le build.
+
+Versions utilisées lors du dernier build vérifié :
+
+- Node.js 26.7.0 pour le runtime serveur ;
+- Node.js 20.19.3 pour Electron Forge.
+
+Vérification :
+
+    node --version
+    npm --version
+    nvm list
+
+Installation initiale des dépendances :
+
+    cd "C:\Users\abdel\Desktop\Final POS"
+    npm install
+    npm --prefix server install
+
+Ne copiez pas node_modules d'un autre ordinateur. Réinstallez les dépendances
+sur la machine utilisée pour compiler.
+
+
+2. CRÉER UNIQUEMENT LE FRONTEND WEB
+======================================================================
+
+Commande :
+
+    npm run build
+
+Cette commande exécute Vite et produit le dossier dist.
+
+Elle ne crée ni programme Windows portable ni installateur.
+
+
+3. CRÉER LA VERSION WINDOWS PORTABLE
+======================================================================
+
+Commande :
+
+    npm run package
+
+Résultat principal :
+
+    out\POS Modern-win32-x64\
+
+Ce dossier contient l'application Windows complète et portable. Pour la
+tester, lancez l'exécutable POS Modern présent dans ce dossier.
+
+Important : si vous distribuez la version portable, vous devez copier tout le
+dossier. L'exécutable seul ne suffit pas.
+
+
+4. CRÉER L'INSTALLATEUR WINDOWS
+======================================================================
+
+Commande recommandée pour une nouvelle livraison :
+
+    npm run make
+
+Cette commande :
+
+1. prépare une base SQLite d'installation propre ;
+2. prépare le runtime Node du serveur local ;
+3. régénère les icônes ;
+4. compile Electron, le preload et React ;
+5. crée la version portable ;
+6. fabrique l'installateur Squirrel Windows.
+
+Installateur final :
+
+    out\make\squirrel.windows\x64\POSModernSetup.exe
+
+C'est ce fichier qu'il faut normalement transmettre au client.
+
+Le même dossier contient aussi :
+
+- POSModern-<version>-full.nupkg : package interne Squirrel ;
+- RELEASES : index utilisé par Squirrel ;
+- éventuellement d'autres fichiers techniques de mise à jour.
+
+Pour une installation manuelle normale, utilisez POSModernSetup.exe.
+
+
+5. VÉRIFICATIONS CONSEILLÉES AVANT LE BUILD
+======================================================================
+
+    npm run lint
+    npm run i18n:check
+    npm run test:licensing
+    npm run make
+
+Le build doit se terminer sans message "Electron Forge failed".
+
+Avant une nouvelle version distribuée, modifiez aussi la propriété version
+dans package.json. Une version supérieure permet à Squirrel de distinguer une
+nouvelle livraison d'une ancienne.
+
+
+6. EXPLICATION DES DOSSIERS
+======================================================================
+
+src\
+----
+Code source Electron et React : écrans, composants, impression, API cliente,
+processus principal et système de licence.
+
+server\
+-------
+API locale, services métier, modèles, migrations SQLite et tests serveur.
+
+La base server\config\pos-modern.db est une base de développement. Elle ne
+doit pas être distribuée comme base d'un nouveau client.
+
+dist\
+-----
+Résultat de "npm run build" pour l'interface React/Vite.
+
+Il contient notamment index.html, le JavaScript compilé, le CSS et les assets
+du frontend. Ce n'est pas un installateur et ce dossier ne doit pas être
+envoyé seul au client.
+
+.vite\
+------
+Fichiers intermédiaires créés par Electron Forge/Vite pour le processus
+principal Electron et le preload.
+
+Ce dossier est généré automatiquement et n'est pas du code source.
+
+build-assets\
+-------------
+Icônes générées pour l'application et l'installateur, notamment :
+
+- app-icon.png ;
+- app-icon.ico.
+
+Elles sont générées à partir des ressources du projet, dont pos.png.
+
+build-runtime\
+--------------
+Runtime du backend local embarqué avec l'application :
+
+- node.exe ;
+- le dossier server ;
+- les dépendances du serveur ;
+- la licence de Node.js.
+
+Cela permet au client d'utiliser le mode Données locales sans installer
+Node.js séparément. En mode Serveur externe, ce backend local n'est pas lancé.
+
+build-install\
+--------------
+Contient la base SQLite propre qui sera livrée avec une nouvelle installation :
+
+    build-install\pos-modern.db
+
+Cette base contient :
+
+- le schéma et les données système indispensables ;
+- exactement un administrateur initial ;
+- aucun produit, client, fournisseur, stock, achat, vente, facture,
+  transaction ou mouvement de caisse de démonstration.
+
+Administrateur initial historique :
+
+    utilisateur : admin
+    mot de passe : admin123
+
+Le mot de passe est hashé dans SQLite. Cet administrateur n'est créé que pour
+une nouvelle base et ne remplace jamais les utilisateurs d'une installation
+existante.
+
+build-demo\
+-----------
+Ancien dossier de préparation de la base de démonstration.
+
+Il n'est plus utilisé par le nouvel installateur et n'est plus inclus dans le
+package. Il peut encore être présent localement à cause d'anciens builds.
+Vous pouvez le supprimer sans affecter le code source ni les données clients.
+
+Le script historique prepare-demo-build.js a été retiré du processus de build.
+
+out\
+----
+Dossier final produit par Electron Forge.
+
+Il contient principalement :
+
+- out\POS Modern-win32-x64 : application portable complète ;
+- out\make\squirrel.windows\x64 : installateur Windows et fichiers Squirrel.
+
+Le contenu de out est généré. Il peut être recréé avec npm run package ou
+npm run make.
+
+node_modules\
+-------------
+Dépendances installées par npm. Ce dossier n'est pas le produit final et ne
+doit pas être distribué manuellement.
+
+
+7. DONNÉES INSTALLÉES SUR LE PC CLIENT
+======================================================================
+
+Les données réelles du client ne sont pas enregistrées dans out, dist ou dans
+le dossier d'installation.
+
+En mode local, Electron utilise son dossier userData Windows, généralement :
+
+    %APPDATA%\POS Modern\
+
+On y trouve notamment :
+
+- pos-modern.db : base métier locale ;
+- connection.json : choix Local/Serveur externe ;
+- license.json : preuve d'activation liée au PC ;
+- les sauvegardes locales selon la configuration.
+
+Recompiler ou réinstaller ne doit pas supprimer cette base existante.
+Ne supprimez jamais ce dossier pour "nettoyer un build" sans sauvegarde.
+
+
+8. ACTIVATION — POINT IMPORTANT AVANT DISTRIBUTION
+======================================================================
+
+La compilation de POS Modern ne déploie pas automatiquement le serveur Initial.
+
+Avant de livrer un installateur utilisant l'activation :
+
+1. le serveur Initial doit contenir les nouvelles modifications de licence ;
+2. la variable SOFTWARE_LICENSE_PRIVATE_KEY doit être configurée dans Vercel ;
+3. le serveur Initial doit être redéployé ;
+4. sa clé privée doit correspondre à la clé publique intégrée à POS Modern ;
+5. testez un nouveau code d'activation sur une installation propre.
+
+La clé privée ne doit jamais être copiée dans Final POS, dans l'installateur,
+dans Git ou sur les postes clients. Le fichier .env local du serveur Initial
+est ignoré par Git.
+
+
+9. CE QU'IL FAUT DISTRIBUER
+======================================================================
+
+Choix recommandé :
+
+    out\make\squirrel.windows\x64\POSModernSetup.exe
+
+Choix pour un test portable :
+
+    tout le dossier out\POS Modern-win32-x64\
+
+Ne distribuez pas seuls :
+
+- dist ;
+- build-runtime ;
+- build-install ;
+- build-assets ;
+- build-demo ;
+- node_modules ;
+- le fichier .nupkg sans le mécanisme Squirrel associé ;
+- une base server\config\pos-modern.db de développement.
+
+
+10. BUILD RAPIDE APRÈS UNE MODIFICATION
+======================================================================
+
+Depuis PowerShell :
+
+    cd "C:\Users\abdel\Desktop\Final POS"
+    npm run lint
+    npm run i18n:check
+    npm run test:licensing
+    npm run make
+
+Puis récupérez :
+
+    C:\Users\abdel\Desktop\Final POS\out\make\squirrel.windows\x64\POSModernSetup.exe
+
+======================================================================

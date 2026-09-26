@@ -4,7 +4,16 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 
 const root = path.resolve(__dirname, "..");
-const skipped = new Set(["node_modules", "dist", ".git", "backups"]);
+const skipped = new Set([
+  "node_modules",
+  "dist",
+  ".git",
+  "backups",
+  "build-runtime",
+  "build-install",
+  "build-demo",
+  "out",
+]);
 function collect(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     if (skipped.has(entry.name)) return [];

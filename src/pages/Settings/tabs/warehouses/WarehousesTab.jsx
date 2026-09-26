@@ -157,6 +157,10 @@ export default function WarehousesTab() {
                   </th>
 
                   <th className="px-4 text-[12px] font-semibold text-black">
+                    {t("rib")}
+                  </th>
+
+                  <th className="px-4 text-[12px] font-semibold text-black">
                     {t("selling")}
                   </th>
 
@@ -174,7 +178,7 @@ export default function WarehousesTab() {
                 {loading ? (
                   <tr>
                     <td
-                      colSpan="7"
+                      colSpan="8"
                       className="h-[120px] text-center text-[13px] text-black/50"
                     >
                       {t("loadingWarehouses")}
@@ -182,7 +186,7 @@ export default function WarehousesTab() {
                   </tr>
                 ) : warehouses.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="h-[160px] text-center">
+                    <td colSpan="8" className="h-[160px] text-center">
                       <div className="flex flex-col items-center justify-center">
                         <div className="flex h-11 w-11 items-center justify-center bg-gray-100 text-black/45">
                           <Warehouse size={21} strokeWidth={1.8} />
@@ -218,6 +222,10 @@ export default function WarehousesTab() {
                       {/* NIF */}
                       <td className="px-4 text-[13px]">
                         {warehouse.nif || "—"}
+                      </td>
+
+                      <td className="px-4 text-[13px]">
+                        {warehouse.rib || "—"}
                       </td>
 
                       {/* CAN SELL */}

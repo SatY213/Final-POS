@@ -835,7 +835,7 @@ function returnableLines(saleId) {
 function hydrateReturn(id) {
   const result = db
     .prepare(
-      `SELECT sr.*,s.sale_number,c.name customer_name,w.name warehouse_name,u.name validated_by_name FROM sales_returns sr JOIN sales s ON s.id=sr.sale_id LEFT JOIN customers c ON c.id=sr.customer_id JOIN warehouses w ON w.id=sr.warehouse_id LEFT JOIN users u ON u.id=sr.validated_by WHERE sr.id=?`,
+      `SELECT sr.*,s.sale_number,c.name customer_name,c.phone customer_phone,c.email customer_email,c.address customer_address,c.nif customer_nif,c.nis customer_nis,c.rib customer_rib,c.tax_article customer_tax_article,c.commercial_register customer_commercial_register,c.business_activity customer_business_activity,w.name warehouse_name,w.phone warehouse_phone,w.email warehouse_email,w.address warehouse_address,w.nif warehouse_nif,w.nis warehouse_nis,w.rib warehouse_rib,w.tax_article warehouse_tax_article,w.commercial_register warehouse_commercial_register,w.business_activity warehouse_business_activity,u.name validated_by_name FROM sales_returns sr JOIN sales s ON s.id=sr.sale_id LEFT JOIN customers c ON c.id=sr.customer_id JOIN warehouses w ON w.id=sr.warehouse_id LEFT JOIN users u ON u.id=sr.validated_by WHERE sr.id=?`,
     )
     .get(id);
   if (!result) return null;

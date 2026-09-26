@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, FileSpreadsheet, Upload } from "lucide-react";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
@@ -6,15 +6,36 @@ import ErrorMessage from "../ui/ErrorMessage";
 import { commitImport, downloadImportTemplate, previewImport } from "../../api/data-exchange.model";
 import { useLanguage } from "../../i18n/LanguageContext";
 
-export default function DataExchangeDialog({ open, entity, title, onClose, onImported }) {
+export default function DataExchangeDialog({
+  open,
+  entity,
+  title,
+  onClose,
+  onImported,
+  optionalSecondaryEntity = null,
+}) {
   const { t } = useLanguage();
   const [file, setFile] = useState(null);
   const [content, setContent] = useState("");
   const [preview, setPreview] = useState(null);
   const [policy, setPolicy] = useState("error");
+  const [format, setFormat] = useState("csv");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState(null);
+  const [activeEntity, setActiveEntity] = useState(entity);
+  const [includeSecondary, setIncludeSecondary] = useState(false);
+  const [primarySummary, setPrimarySummary] = useState(null);
+  const isSecondaryStep = Boolean(
+    optionalSecondaryEntity && activeEntity === optionalSecondaryEntity,
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    setActiveEntity(entity);
+    setIncludeSecondary(false);
+    setPrimarySummary(null);
+  }, [open, entity]);
 
   async function choose(event) {
     const selected = event.target.files?.[0];
@@ -23,7 +44,9 @@ export default function DataExchangeDialog({ open, entity, title, onClose, onImp
     setSummary(null);
     setError("");
     if (!selected) return setContent("");
-    if (!selected.name.toLocaleLowerCase().endsWith(".csv")) return setError(t("csvOnly"));
+    const extension = selected.name.toLocaleLowerCase().split(".").pop();
+    if (!["csv", "sql"].includes(extension)) return setError(t("csvOrSqlOnly"));
+    setFormat(extension);
     setContent(await selected.text());
   }
 
@@ -31,7 +54,7 @@ export default function DataExchangeDialog({ open, entity, title, onClose, onImp
     try {
       setBusy(true);
       setError("");
-      setPreview(await previewImport(entity, content));
+      setPreview(await previewImport(activeEntity, content, format));
     } catch (reason) {
       setError(reason.message);
     } finally {
@@ -43,10 +66,22 @@ export default function DataExchangeDialog({ open, entity, title, onClose, onImp
     try {
       setBusy(true);
       setError("");
-      const result = await commitImport(entity, content, policy);
-      setSummary(result);
+      const result = await commitImport(activeEntity, content, policy, format);
       setPreview(null);
       await onImported?.();
+      if (
+        optionalSecondaryEntity &&
+        includeSecondary &&
+        activeEntity === entity
+      ) {
+        setPrimarySummary(result);
+        setActiveEntity(optionalSecondaryEntity);
+        setFile(null);
+        setContent("");
+        setFormat("csv");
+        return;
+      }
+      setSummary(result);
     } catch (reason) {
       setError(reason.message);
     } finally {
@@ -57,8 +92,12 @@ export default function DataExchangeDialog({ open, entity, title, onClose, onImp
   function close() {
     setFile(null);
     setContent("");
+    setFormat("csv");
     setPreview(null);
     setSummary(null);
+    setActiveEntity(entity);
+    setIncludeSecondary(false);
+    setPrimarySummary(null);
     setError("");
     onClose();
   }
@@ -66,22 +105,42 @@ export default function DataExchangeDialog({ open, entity, title, onClose, onImp
   return (
     <Modal
       open={open}
-      title={title}
+      title={isSecondaryStep ? t("importInitialStock") : title}
       onClose={close}
       width="xl"
       footer={<><Button onClick={close}>{t("close")}</Button>{preview && !preview.error_count && <Button variant="primary" onClick={confirm} disabled={busy}>{t("confirmImport")}</Button>}</>}
     >
       <div className="space-y-4 p-5">
         <ErrorMessage message={error} onClose={() => setError("")} />
-        <div className="grid gap-3 md:grid-cols-3">
-          <button onClick={() => downloadImportTemplate(entity).catch((reason) => setError(reason.message))} className="flex min-h-20 items-center gap-3 border border-gray-300 p-4 text-left hover:bg-gray-50">
+        {optionalSecondaryEntity && !isSecondaryStep && !summary && (
+          <label className="flex cursor-pointer items-center gap-3 border border-gray-300 bg-gray-50 p-3 text-[12px] font-semibold">
+            <input
+              type="checkbox"
+              checked={includeSecondary}
+              onChange={(event) => setIncludeSecondary(event.target.checked)}
+              className="h-4 w-4 accent-[#099323]"
+            />
+            {t("alsoImportInitialStock")}
+          </label>
+        )}
+        {isSecondaryStep && primarySummary && (
+          <div className="border border-green-300 bg-green-50 p-3 text-[12px] text-green-800">
+            <b>{t("productsImported")}</b> {t("selectInitialStockFile")}
+          </div>
+        )}
+        <div className="grid gap-3 md:grid-cols-4">
+          <button onClick={() => downloadImportTemplate(activeEntity, "csv").catch((reason) => setError(reason.message))} className="flex min-h-20 items-center gap-3 border border-gray-300 p-4 text-left hover:bg-gray-50">
             <Download size={20} className="text-blue-600" />
             <span><b className="block text-[12px]">{t("downloadTemplate")}</b><small className="text-black/45">CSV UTF-8</small></span>
           </button>
+          <button onClick={() => downloadImportTemplate(activeEntity, "sql").catch((reason) => setError(reason.message))} className="flex min-h-20 items-center gap-3 border border-gray-300 p-4 text-left hover:bg-gray-50">
+            <Download size={20} className="text-purple-700" />
+            <span><b className="block text-[12px]">{t("downloadTemplate")}</b><small className="text-black/45">{t("sqlInsertTemplate")}</small></span>
+          </button>
           <label className="flex min-h-20 cursor-pointer items-center gap-3 border border-dashed border-gray-400 p-4 hover:bg-gray-50">
             <Upload size={20} className="text-green-700" />
-            <span><b className="block text-[12px]">{file?.name || t("selectCsvFile")}</b><small className="text-black/45">{file ? `${Math.round(file.size / 1024)} Ko` : t("csvPreviewBeforeImport")}</small></span>
-            <input hidden type="file" accept=".csv,text/csv" onChange={choose} />
+            <span><b className="block text-[12px]">{file?.name || t("selectCsvOrSqlFile")}</b><small className="text-black/45">{file ? `${Math.round(file.size / 1024)} Ko · ${format.toUpperCase()}` : t("csvOrSqlPreviewBeforeImport")}</small></span>
+            <input hidden type="file" accept=".csv,.sql,text/csv,application/sql,text/sql" onChange={choose} />
           </label>
           <label className="block border border-gray-300 p-3">
             <span className="mb-1 block text-[10px] font-bold uppercase text-black/45">{t("duplicateHandling")}</span>

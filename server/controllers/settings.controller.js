@@ -55,6 +55,19 @@ module.exports = {
       return res.status(error.status || 500).json({ message: error.message || "Backup restore failed" });
     }
   },
+  async resetBusinessData(req, res) {
+    try {
+      const result = await Backups.resetBusinessData(
+        req.body?.confirmation,
+        req.user,
+        req.token,
+      );
+      return res.json(result);
+    } catch (error) {
+      console.error("Data reset error", error);
+      return res.status(error.status || 500).json({ message: error.message || "Data reset failed" });
+    }
+  },
   group(req, res) {
     return handle(res, () =>
       res.json({ settings: Settings.getGroup(req.params.group) }),

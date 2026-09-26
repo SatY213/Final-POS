@@ -34,6 +34,7 @@ export function purchasePrintData(document, kind) {
     customer_address: document?.supplier_address,
     customer_nif: document?.supplier_nif,
     customer_nis: document?.supplier_nis,
+    customer_rib: document?.supplier_rib,
     customer_tax_article: document?.supplier_tax_article,
     customer_commercial_register: document?.supplier_commercial_register,
     customer_business_activity: document?.supplier_business_activity,

@@ -29,6 +29,7 @@ const fiscal = (prefix, d) =>
   [
     ["NIF", d[`${prefix}_nif`]],
     ["NIS", d[`${prefix}_nis`]],
+    ["RIB", d[`${prefix}_rib`]],
     ["Article", d[`${prefix}_tax_article`]],
     ["RC", d[`${prefix}_commercial_register`]],
     ["Activité", d[`${prefix}_business_activity`]],
