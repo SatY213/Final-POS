@@ -30,10 +30,17 @@ if (Test-Path -LiteralPath $nvmRoot) {
     Select-Object -First 1
   if ($node20) { $forgeNode = $node20 }
 }
-$forge = Join-Path $projectRoot 'node_modules/@electron-forge/cli/dist/electron-forge.js'
 $command = if ($PackageOnly) { 'package' } else { 'make' }
-& $forgeNode $forge $command
-if ($LASTEXITCODE -ne 0) { throw "Electron Forge $command failed ($LASTEXITCODE)." }
+Push-Location $projectRoot
+try {
+  # Use Forge's programmatic API. Its CLI launches a second JavaScript file and
+  # can split the project path when it contains spaces (for example Final POS).
+  $forgeBootstrap = "const {api}=require('@electron-forge/core');api.$command({dir:process.cwd(),interactive:true,arch:process.arch,platform:process.platform}).catch((error)=>{console.error(error);process.exitCode=1})"
+  & $forgeNode -e $forgeBootstrap $command
+  if ($LASTEXITCODE -ne 0) { throw "Electron Forge $command failed ($LASTEXITCODE)." }
+} finally {
+  Pop-Location
+}
 
 if (-not $PackageOnly) {
   $installer = Join-Path $projectRoot 'out/make/squirrel.windows/x64/POSModernSetup.exe'

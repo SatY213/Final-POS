@@ -1,0 +1,18 @@
+const router = require("express").Router();
+const auth = require("../middleware/auth.middleware");
+const controller = require("../controllers/purchase.controller");
+router.use(auth);
+router.get("/context", controller.context);
+router.post("/suppliers", controller.createSupplier);
+router.get("/orders", controller.orders);
+router.post("/orders", controller.createOrder);
+router.get("/orders/:id", controller.order);
+router.get("/receipts", controller.receipts);
+router.post("/receipts", controller.createReceipt);
+router.get("/receipts/:id", controller.receipt);
+router.put("/receipts/:id", controller.updateReceipt);
+router.post("/receipts/:id/payments", controller.addReceiptPayment);
+router.get("/returns", controller.returns);
+router.get("/returns/:id", controller.returnDetail);
+router.post("/receipts/:id/returns", controller.createReturn);
+module.exports = router;

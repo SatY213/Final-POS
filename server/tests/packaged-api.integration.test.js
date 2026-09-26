@@ -45,7 +45,7 @@ async function startAndCheck(port, databasePath, token) {
     if (!token) {
       const login = await fetch(`${base}/api/auth/login`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "admin", password: "Admin123!" }),
+        body: JSON.stringify({ username: "admin", password: "admin123" }),
       });
       const loginData = await login.json();
       assert.equal(login.status, 200, loginData.message || "Packaged login failed");
@@ -69,9 +69,16 @@ async function startAndCheck(port, databasePath, token) {
     const databasePath = path.join(directory, "pos-modern.db");
     const port = await freePort();
     const token = await startAndCheck(port, databasePath, null);
-    assert.ok(fs.existsSync(databasePath), "First launch must copy the demo database to writable user data");
+    assert.ok(fs.existsSync(databasePath), "First launch must copy the startup database to writable user data");
     const db = new Database(databasePath, { readonly: true });
-    try { assert.equal(db.prepare("SELECT COUNT(*) count FROM products").get().count, 200); }
+    try {
+      assert.equal(db.prepare("SELECT COUNT(*) count FROM products").get().count, 0);
+      assert.equal(db.prepare("SELECT COUNT(*) count FROM customers").get().count, 0);
+      assert.equal(db.prepare("SELECT COUNT(*) count FROM suppliers").get().count, 0);
+      assert.equal(db.prepare("SELECT COUNT(*) count FROM warehouses").get().count, 1);
+      assert.equal(db.prepare("SELECT COUNT(*) count FROM cash_registers").get().count, 1);
+      assert.equal(db.prepare("SELECT COUNT(*) count FROM user_warehouses").get().count, 1);
+    }
     finally { db.close(); }
     await startAndCheck(port, databasePath, token);
     console.log("Packaged API passed (bootstrap, login, persisted session after restart).");

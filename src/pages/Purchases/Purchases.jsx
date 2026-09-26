@@ -20,6 +20,7 @@ import Th from "../../components/ui/Th";
 import Td from "../../components/ui/Td";
 import ExportButton from "../../components/data-exchange/ExportButton";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { fuzzyIncludes } from "../../utils/search";
 
 const labels = {
   CANCELLED: "Annulé",
@@ -79,11 +80,16 @@ export default function Purchases({ warehouseId, onNavigate, initialFilters = nu
   }, [menu]);
   const rows = useMemo(
     () =>
-      items.filter((row) =>
-        (!initialFilters?.payment_status || row.payment_status === initialFilters.payment_status) &&
-        `${row.receipt_number} ${row.order_number || ""} ${row.supplier_name || ""}`
-          .toLowerCase()
-          .includes(search.trim().toLowerCase()),
+      items.filter(
+        (row) =>
+          (!initialFilters?.payment_status ||
+            row.payment_status === initialFilters.payment_status) &&
+          fuzzyIncludes(
+            search,
+            row.receipt_number,
+            row.order_number,
+            row.supplier_name,
+          ),
       ),
     [items, search, initialFilters],
   );

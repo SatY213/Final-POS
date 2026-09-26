@@ -7,6 +7,7 @@ import { inputClass } from "../../components/ui/FormField";
 import { formatMoney } from "../../utils/formatters";
 import { getSettings } from "../../api/settings.model";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { fuzzyIncludes } from "../../utils/search";
 import { PurchaseArticleEditor } from "./PurchaseDialogs";
 import { printPurchaseDirect } from "../Purchases/PurchasePrintDialog";
 import CartTable from "../PointOfSale/CartTable";
@@ -68,9 +69,18 @@ export default function PointOfPurchase({ warehouseId, initialOrder, initialEdit
     })));
   }, [initialEditReceipt]);
   const results = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase();
-    if (!needle) return [];
-    return context.products.filter((product) => `${product.designation} ${product.reference || ""}`.toLocaleLowerCase().includes(needle)).slice(0, 12);
+    if (!query.trim()) return [];
+    return context.products
+      .filter((product) =>
+        fuzzyIncludes(
+          query,
+          product.designation,
+          product.reference,
+          product.barcodes,
+          product.unit_name,
+        ),
+      )
+      .slice(0, 12);
   }, [context.products, query]);
   const total = useMemo(() => lines.reduce((sum, line) => sum + Number(line.quantity || 0) * Number(line.unit_price || 0), 0), [lines]);
   const cartLines = useMemo(() => lines.map((line) => ({
@@ -172,6 +182,11 @@ export default function PointOfPurchase({ warehouseId, initialOrder, initialEdit
         if (event.key === "Escape") { event.preventDefault(); setDialog(null); searchRef.current?.focus(); }
         return;
       }
+      if (event.ctrlKey && event.key === "Enter") {
+        event.preventDefault();
+        startSave();
+        return;
+      }
       if (["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName) && !/^F\d+$/.test(event.key)) return;
       const actions = {
         F1: () => searchRef.current?.focus(),
@@ -245,7 +260,17 @@ function PurchaseTraceabilityDialog({ open, product, serialNumbers: selectedSeri
 function SupplierDialog({ open, context, setContext, onSelect, onClose, setError }) {
   const { t } = useLanguage();
   const [name, setName] = useState(""), [query, setQuery] = useState(""), [highlight, setHighlight] = useState(0);
-  const choices = (context.suppliers || []).filter((supplier) => `${supplier.name} ${supplier.phone || ""} ${supplier.nif || ""}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+  const choices = (context.suppliers || []).filter((supplier) =>
+    fuzzyIncludes(
+      query,
+      supplier.name,
+      supplier.phone,
+      supplier.email,
+      supplier.nif,
+      supplier.nis,
+      supplier.rib,
+    ),
+  );
   async function add() { try { const supplier = await createSupplier({ name }); setContext({ ...context, suppliers: [...context.suppliers, supplier].sort((a,b) => a.name.localeCompare(b.name)) }); onSelect(supplier); } catch (e) { setError(e.message); } }
   return <Modal open={open} title={t("Sélectionner un fournisseur")} onClose={onClose} width="md"><div className="p-4"><input autoFocus value={query} onChange={(e) => { setQuery(e.target.value); setHighlight(0); }} className={inputClass} placeholder={t("Rechercher un fournisseur…")} onKeyDown={(e) => { if (e.key === "ArrowDown") { e.preventDefault(); setHighlight((i) => Math.min(choices.length - 1, i + 1)); } if (e.key === "ArrowUp") { e.preventDefault(); setHighlight((i) => Math.max(0, i - 1)); } if (e.key === "Enter" && choices[highlight]) { onSelect(choices[highlight]); } }}/><div className="mt-2 max-h-64 overflow-auto">{choices.map((item,index) => <button key={item.id} onMouseEnter={() => setHighlight(index)} onClick={() => onSelect(item)} className={`flex min-h-12 w-full items-center justify-between border-b px-2 text-left text-[12px] ${index === highlight ? "bg-green-50" : ""}`}><b>{item.name}</b><span className="text-black/50">{item.phone || item.nif || ""}</span></button>)}{!choices.length && <p className="p-6 text-center text-[12px] text-black/45">{t("noSuppliers")}</p>}</div><div className="mt-4 border-t pt-4"><p className="mb-2 text-[10px] font-bold uppercase text-black/50">{t("Nouveau fournisseur")}</p><div className="flex"><input className={inputClass} placeholder={t("supplierName")} value={name} onChange={(e) => setName(e.target.value)}/><Button variant="primary" disabled={!name.trim()} onClick={add}><Plus size={14}/> {t("Ajouter")}</Button></div></div></div></Modal>;
 }

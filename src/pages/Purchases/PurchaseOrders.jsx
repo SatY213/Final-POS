@@ -11,6 +11,7 @@ import Th from "../../components/ui/Th";
 import Td from "../../components/ui/Td";
 import ExportButton from "../../components/data-exchange/ExportButton";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { fuzzyIncludes } from "../../utils/search";
 const labels = {
   NOT_RECEIVED: "Non reçu",
   PARTIALLY_RECEIVED: "Partiellement reçu",
@@ -36,10 +37,8 @@ export default function PurchaseOrders({ warehouseId, onNavigate }) {
   }, [warehouseId]);
   const rows = useMemo(
     () =>
-      items.filter((x) =>
-        `${x.order_number} ${x.supplier_name}`
-          .toLowerCase()
-          .includes(search.toLowerCase()),
+      items.filter((item) =>
+        fuzzyIncludes(search, item.order_number, item.supplier_name),
       ),
     [items, search],
   );
