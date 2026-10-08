@@ -1639,6 +1639,29 @@ dynamic.ar.push([
   "جدول SQL ‏$1 لا يطابق نوع الاستيراد $2.",
 ]);
 
+Object.assign(translations.fr, {
+  "You cannot access warranties from this warehouse": "Vous ne pouvez pas consulter les garanties de cet entrepôt.",
+  "Warranty duration is invalid": "La durée de garantie est invalide.",
+  "Warranty duration unit is invalid": "L’unité de durée de garantie est invalide.",
+  "Invoiced price is invalid": "Le prix facturé est invalide.",
+  "Product package is invalid": "Le conditionnement du produit est invalide.",
+  "Warranty not found": "Garantie introuvable.",
+  "Required warranty information is missing": "Renseignez les informations obligatoires de la garantie.",
+  "A serial number is required for this warranty": "Le numéro de série est obligatoire pour cette garantie.",
+  "A batch number is required for this warranty": "Le numéro de lot est obligatoire pour cette garantie.",
+});
+Object.assign(translations.ar, {
+  "You cannot access warranties from this warehouse": "لا يمكنك الاطلاع على ضمانات هذا المستودع.",
+  "Warranty duration is invalid": "مدة الضمان غير صالحة.",
+  "Warranty duration unit is invalid": "وحدة مدة الضمان غير صالحة.",
+  "Invoiced price is invalid": "السعر المفوتر غير صالح.",
+  "Product package is invalid": "تعبئة المنتج غير صالحة.",
+  "Warranty not found": "الضمان غير موجود.",
+  "Required warranty information is missing": "أدخل معلومات الضمان الإلزامية.",
+  "A serial number is required for this warranty": "الرقم التسلسلي إلزامي لهذا الضمان.",
+  "A batch number is required for this warranty": "رقم الدفعة إلزامي لهذا الضمان.",
+});
+
 export function translateErrorMessage(message, language) {
   const text = String(message || "").trim();
   if (!text) return text;

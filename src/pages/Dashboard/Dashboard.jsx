@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   AlertTriangle, ArrowRight, BarChart3, Boxes, FileText, Package,
-  ReceiptText, Search, Settings, ShoppingCart, TrendingUp, Users, Wallet,
+  ReceiptText, Search, Settings, ShieldCheck, ShoppingCart, TrendingUp, Users, Wallet,
 } from "lucide-react";
 import { useLanguage } from "../../i18n/LanguageContext";
 import ModuleCard from "../../components/ModuleCard";
@@ -27,7 +27,7 @@ const quickModules = [
   { key: "transactions", icon: ReceiptText, bg: "bg-[#eef5ff]", color: "text-[#2563eb]" },
   { key: "reports", icon: BarChart3, bg: "bg-[#f2ecff]", color: "text-[#7c3aed]" },
   { key: "settings", icon: Settings, bg: "bg-[#eeeeee]", color: "text-black" },
-  { key: "cashRegisterModule", page: "cash-register", icon: Wallet, bg: "bg-[#e8f7eb]", color: "text-[#087c1e]" },
+  { key: "Garanties", page: "warranties", icon: ShieldCheck, bg: "bg-[#e8f7eb]", color: "text-[#087c1e]" },
 ];
 
 export default function Dashboard({ cashSession, warehouseId, onNavigate }) {
@@ -55,7 +55,7 @@ export default function Dashboard({ cashSession, warehouseId, onNavigate }) {
   const recent = data?.recent_activity || [];
   return <div className="flex h-full flex-col overflow-hidden bg-[#f5f7f5] text-black">
     <ErrorMessage message={error} onClose={() => setError("")} />
-    <main className="flex-1 overflow-auto"><div className="mx-auto max-w-[1500px] px-7 py-5">
+    <main className="flex-1 overflow-auto"><div className="w-full px-7 py-5">
       <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.6fr_1fr]">
         <button type="button" onClick={() => navigate(cashSession ? "pos" : "cash-register")} className="flex min-h-[170px] items-center justify-between border border-[#087c1e] bg-[#099323] px-7 text-left text-white">
           <div className="flex items-center gap-6"><div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center bg-white/15"><ShoppingCart size={34}/></div><div><p className="text-[12px] font-semibold uppercase tracking-[0.13em] text-white/75">{t("newTransaction")}</p><h1 className="mt-2 text-[30px] font-bold tracking-tight">{t("startSale")}</h1><p className="mt-2 text-sm text-white/80">{t("scanCheckout")}</p></div></div><ArrowRight size={30}/>

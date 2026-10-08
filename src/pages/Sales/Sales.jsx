@@ -367,7 +367,7 @@ export default function Sales({ warehouseId, onNavigate, session, initialFilters
   return (
     <div className="flex h-full min-h-0 flex-col bg-[#f4f6f5]">
       <main className="min-h-0 flex-1 overflow-hidden p-4 lg:p-5">
-        <section className="mx-auto flex h-full min-h-0 max-w-[1500px] flex-col overflow-hidden border border-gray-300 bg-white shadow-sm">
+        <section className="flex h-full min-h-0 w-full flex-col overflow-hidden border border-gray-300 bg-white shadow-sm">
           {/* =================================================
            * HEADER
            * ================================================= */}
@@ -1084,7 +1084,7 @@ function InvoicesView({ warehouseId, onNavigate, onBack, language, t }) {
     <div className="flex h-full min-h-0 flex-col bg-[#f4f6f5]">
       <ErrorMessage message={error} onClose={() => setError("")} />
       <main className="min-h-0 flex-1 overflow-hidden p-4 lg:p-5">
-        <section className="mx-auto flex h-full min-h-0 max-w-[1500px] flex-col overflow-hidden border border-gray-300 bg-white shadow-sm">
+        <section className="flex h-full min-h-0 w-full flex-col overflow-hidden border border-gray-300 bg-white shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center bg-green-50 text-[#099323]">

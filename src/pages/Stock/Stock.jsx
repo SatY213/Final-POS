@@ -86,7 +86,7 @@ export default function Stock({ warehouseId, warehouses, warehouseError, initial
   return (
     <div className="flex h-full flex-col bg-[#f5f7f5]">
       <main className="min-h-0 flex-1 overflow-auto p-6">
-        <div className="mx-auto max-w-[1500px]">
+        <div className="w-full">
           {mode === "list" ? (
             <section className="border border-gray-300 bg-white">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-5 py-4">

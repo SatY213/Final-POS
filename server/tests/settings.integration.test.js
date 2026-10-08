@@ -147,6 +147,8 @@ try {
         show_barcode_text: false,
         label_width_mm: 55,
         label_height_mm: 32,
+        barcode_width_mm: 45,
+        barcode_height_mm: 2,
         content_gap_mm: 2,
         label_padding_mm: 3,
       },
@@ -154,6 +156,8 @@ try {
     assert.equal(labelProfile.paper_format, "CUSTOM");
     assert.equal(labelProfile.configuration.price_position, "BOTTOM");
     assert.equal(labelProfile.configuration.show_barcode_text, false);
+    assert.equal(labelProfile.configuration.barcode_width_mm, 45);
+    assert.equal(labelProfile.configuration.barcode_height_mm, 2);
     assert.equal(labelProfile.configuration.content_gap_mm, 2);
 
     Settings.updateGroup(

@@ -23,6 +23,7 @@ const formats = {
   PURCHASE_ORDER: ["A4", "A5", "THERMAL_80", "THERMAL_58"],
   PURCHASE_RECEIPT: ["A4", "A5", "THERMAL_80", "THERMAL_58"],
   PURCHASE_RETURN: ["A4", "A5", "THERMAL_80", "THERMAL_58"],
+  WARRANTY: ["A4", "A5"],
   BARCODE_LABEL: ["40x25mm", "50x30mm", "60x40mm", "CUSTOM"],
 };
 export default function PrintingTab() {
@@ -223,7 +224,7 @@ function Profile({
     "INVOICE",
   ].includes(profile.document_type);
   const purchaseProfile = ["PURCHASE_ORDER", "PURCHASE_RECEIPT", "PURCHASE_RETURN"].includes(profile.document_type);
-  const titledProfile = saleProfile || profile.document_type === "QUOTE" || purchaseProfile;
+  const titledProfile = saleProfile || profile.document_type === "QUOTE" || purchaseProfile || profile.document_type === "WARRANTY";
   const flags =
     saleProfile
       ? [
@@ -242,6 +243,8 @@ function Profile({
           "show_change",
           ...(profile.document_type === "SALE_TICKET" ? [] : ["show_discounts"]),
         ]
+      : profile.document_type === "WARRANTY"
+        ? ["show_logo", "show_warehouse_name", "show_address", "show_phone", "show_email", "show_legal_info", "show_customer", "show_signature_area"]
       : purchaseProfile
         ? ["show_logo", "show_warehouse_name", "show_address", "show_phone", "show_email", "show_legal_info", "show_customer", "show_product_reference", "show_discounts"]
       : ["SALE_INVOICE", "QUOTE"].includes(profile.document_type)
@@ -443,10 +446,26 @@ function Profile({
               }
             />
             <LabelNumber
+              label={t("barcodeWidthMm")}
+              value={
+                config.barcode_width_mm ??
+                defaultBarcodeWidth(profile.paper_format, config)
+              }
+              min="5"
+              max="150"
+              step="0.5"
+              onChange={(value) =>
+                onChange({
+                  configuration: { ...config, barcode_width_mm: value },
+                })
+              }
+            />
+            <LabelNumber
               label={t("barcodeHeightMm")}
               value={config.barcode_height_mm ?? 13}
-              min="6"
+              min="1"
               max="60"
+              step="0.5"
               onChange={(value) =>
                 onChange({
                   configuration: { ...config, barcode_height_mm: value },
@@ -630,4 +649,10 @@ function LabelNumber({ label, value, onChange, ...props }) {
       />
     </FormField>
   );
+}
+
+function defaultBarcodeWidth(format, config) {
+  const presetWidth = /^([0-9.]+)x/.exec(format || "")?.[1];
+  const labelWidth = Number(presetWidth || config.label_width_mm || 50);
+  return Math.max(5, labelWidth);
 }

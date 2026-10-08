@@ -101,7 +101,7 @@ export default function Customers({ session }) {
   return (
     <div className="flex h-full flex-col bg-[#f5f7f5]">
       <main className="min-h-0 flex-1 overflow-auto p-6">
-        <div className="mx-auto max-w-[1500px]">
+        <div className="w-full">
           {mode === "form" ? (
             <CustomerForm
               customer={selected}

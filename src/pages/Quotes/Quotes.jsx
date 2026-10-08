@@ -94,7 +94,7 @@ export default function Quotes({ warehouseId, onNavigate }) {
   }
   return (
     <div className="h-full overflow-auto bg-[#f5f7f5] p-5">
-      <section className="mx-auto flex h-full max-w-[1500px] flex-col border border-gray-300 bg-white">
+      <section className="flex h-full w-full flex-col border border-gray-300 bg-white">
         <header className="flex items-center gap-3 border-b p-5">
           <FileText className="text-[#099323]" />
           <div>

@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("print-document", { document, profile }),
   printBarcodeLabels: (rows, profile) =>
     ipcRenderer.invoke("print-barcode-labels", { rows, profile }),
+  printWarranty: (warranty, profile) =>
+    ipcRenderer.invoke("print-warranty", { warranty, profile }),
   getConnectionConfig: () => ipcRenderer.invoke("get-connection-config"),
   testApiConnection: (apiUrl) => ipcRenderer.invoke("test-api-connection", apiUrl),
   saveConnectionConfig: (config) =>

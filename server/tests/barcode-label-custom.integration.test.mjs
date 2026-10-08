@@ -30,6 +30,7 @@ const html = buildBarcodeLabelsHtml(
       name_font_size: 14,
       price_font_size: 18,
       reference_font_size: 9,
+      barcode_width_mm: 42,
       barcode_height_mm: 16,
       price_position: "BOTTOM",
       show_barcode_text: false,
@@ -48,7 +49,7 @@ assert.match(
 );
 assert.match(html, /\.price\{font-size:18px/);
 assert.match(html, /\.reference\{font-size:9px/);
-assert.match(html, /\.barcode\{width:100%;height:16mm/);
+assert.match(html, /\.barcode\{width:42mm;height:16mm/);
 assert.match(html, /padding:3mm;gap:2mm/);
 assert.doesNotMatch(html, /<text /);
 assert.ok(html.indexOf('<div class="barcode">') < html.indexOf("100.00 DA"));

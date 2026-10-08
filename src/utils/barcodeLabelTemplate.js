@@ -115,32 +115,202 @@ const esc = (value) =>
         c
       ],
   );
-export function code128Svg(value, showText = true) {
-  const text = String(value || "");
+
+const EAN_L = [
+  "0001101", "0011001", "0010011", "0111101", "0100011",
+  "0110001", "0101111", "0111011", "0110111", "0001011",
+];
+const EAN_G = [
+  "0100111", "0110011", "0011011", "0100001", "0011101",
+  "0111001", "0000101", "0010001", "0001001", "0010111",
+];
+const EAN_R = [
+  "1110010", "1100110", "1101100", "1000010", "1011100",
+  "1001110", "1010000", "1000100", "1001000", "1110100",
+];
+const EAN_PARITY = [
+  "LLLLLL", "LLGLGG", "LLGGLG", "LLGGGL", "LGLLGG",
+  "LGGLLG", "LGGGLL", "LGLGLG", "LGLGGL", "LGGLGL",
+];
+
+export function ean13CheckDigit(value) {
+  const digits = String(value ?? "");
+  if (!/^\d{12}$/.test(digits)) return null;
+  const sum = [...digits].reduce(
+    (total, digit, index) => total + Number(digit) * (index % 2 ? 3 : 1),
+    0,
+  );
+  return String((10 - (sum % 10)) % 10);
+}
+
+export function normalizeEan13(value) {
+  const text = String(value ?? "").trim();
+  if (/^\d{12}$/.test(text)) return `${text}${ean13CheckDigit(text)}`;
+  if (/^\d{13}$/.test(text) && ean13CheckDigit(text.slice(0, 12)) === text[12])
+    return text;
+  return null;
+}
+
+export function encodeEan13(value) {
+  const text = normalizeEan13(value);
+  if (!text) return null;
+  const parity = EAN_PARITY[Number(text[0])];
+  let modules = "101";
+  for (let index = 1; index <= 6; index += 1) {
+    const digit = Number(text[index]);
+    modules += parity[index - 1] === "L" ? EAN_L[digit] : EAN_G[digit];
+  }
+  modules += "01010";
+  for (let index = 7; index <= 12; index += 1)
+    modules += EAN_R[Number(text[index])];
+  modules += "101";
+  return { text, modules };
+}
+
+export function encodeCode128B(value) {
+  const text = String(value ?? "");
   if (
     !text ||
-    [...text].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) > 126)
+    [...text].some((character) => {
+      const code = character.charCodeAt(0);
+      return code < 32 || code > 126;
+    })
   )
-    return "";
-  const codes = [104, ...[...text].map((c) => c.charCodeAt(0) - 32)],
-    checksum =
-      codes.reduce(
-        (sum, code, index) => sum + (index ? code * index : code),
-        0,
-      ) % 103;
+    return null;
+  const codes = [104, ...[...text].map((character) => character.charCodeAt(0) - 32)];
+  const checksum = codes.reduce(
+    (sum, code, index) => sum + (index === 0 ? code : code * index),
+    0,
+  ) % 103;
   codes.push(checksum, 106);
-  let x = 10,
+  return { text, codes };
+}
+
+const code128Checksum = (codes) =>
+  codes.reduce(
+    (sum, code, index) => sum + (index === 0 ? code : code * index),
+    0,
+  ) % 103;
+
+const numericRunLength = (text, start) => {
+  let end = start;
+  while (end < text.length && /\d/.test(text[end])) end += 1;
+  return end - start;
+};
+
+// Code Set B handles the alphanumeric portions while Code Set C compacts each
+// sufficiently long numeric run. This is a valid Code 128 auto-encoding and
+// keeps mixed references such as "PC-2026-000123" readable on narrow labels.
+export function encodeCode128(value) {
+  const text = String(value ?? "");
+  if (
+    !text ||
+    [...text].some((character) => {
+      const code = character.charCodeAt(0);
+      return code < 32 || code > 126;
+    })
+  )
+    return null;
+
+  const codes = [];
+  let index = 0;
+  let activeSet;
+  const initialDigits = numericRunLength(text, 0);
+  if (initialDigits >= 4 && initialDigits % 2 === 0) {
+    codes.push(105);
+    activeSet = "C";
+  } else {
+    codes.push(104);
+    activeSet = "B";
+  }
+
+  while (index < text.length) {
+    const digits = numericRunLength(text, index);
+    if (activeSet === "B") {
+      if (digits >= 4) {
+        if (digits % 2) {
+          codes.push(text.charCodeAt(index) - 32);
+          index += 1;
+        }
+        codes.push(99);
+        activeSet = "C";
+        continue;
+      }
+      codes.push(text.charCodeAt(index) - 32);
+      index += 1;
+      continue;
+    }
+
+    if (digits >= 2) {
+      codes.push(Number(text.slice(index, index + 2)));
+      index += 2;
+    } else {
+      codes.push(100);
+      activeSet = "B";
+    }
+  }
+
+  codes.push(code128Checksum(codes), 106);
+  return { text, codes };
+}
+
+export function code128Svg(value, showText = true) {
+  const encoded = encodeCode128(value);
+  if (!encoded) return "";
+  const quietZone = 10;
+  let x = quietZone,
     bars = "";
-  for (const code of codes) {
+  for (const code of encoded.codes) {
     let bar = true;
     for (const widthChar of patterns[code]) {
-      const width = Number(widthChar) * 2;
+      const width = Number(widthChar);
       if (bar) bars += `<rect x="${x}" y="0" width="${width}" height="48"/>`;
       x += width;
       bar = !bar;
     }
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${x + 10} ${showText ? 62 : 50}" preserveAspectRatio="none" aria-label="${esc(text)}"><g fill="#000">${bars}</g>${showText ? `<text x="${(x + 10) / 2}" y="60" text-anchor="middle" font-family="Arial" font-size="10">${esc(text)}</text>` : ""}</svg>`;
+  const totalWidth = x + quietZone;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalWidth} ${showText ? 62 : 50}" preserveAspectRatio="none" shape-rendering="crispEdges" data-symbology="CODE128" aria-label="${esc(encoded.text)}"><g fill="#000">${bars}</g>${showText ? `<text x="${totalWidth / 2}" y="60" text-anchor="middle" font-family="Arial" font-size="10">${esc(encoded.text)}</text>` : ""}</svg>`;
+}
+
+export function ean13Svg(value, showText = true) {
+  const encoded = encodeEan13(value);
+  if (!encoded) return "";
+  const leftQuiet = 11;
+  const rightQuiet = 7;
+  const guards = new Set([0, 2, 46, 48, 92, 94]);
+  let bars = "";
+  for (let index = 0; index < encoded.modules.length; index += 1) {
+    if (encoded.modules[index] !== "1") continue;
+    bars += `<rect x="${leftQuiet + index}" y="0" width="1" height="${guards.has(index) ? 48 : 42}"/>`;
+  }
+  const totalWidth = leftQuiet + encoded.modules.length + rightQuiet;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalWidth} ${showText ? 62 : 50}" preserveAspectRatio="none" shape-rendering="crispEdges" data-symbology="EAN13" aria-label="${encoded.text}"><g fill="#000">${bars}</g>${showText ? `<text x="${totalWidth / 2}" y="60" text-anchor="middle" font-family="Arial" font-size="10" letter-spacing="1">${encoded.text}</text>` : ""}</svg>`;
+}
+
+export function isBarcodeValueValid(value, symbology = "CODE128") {
+  return symbology === "EAN13"
+    ? Boolean(normalizeEan13(value))
+    : Boolean(encodeCode128(value));
+}
+
+export function barcodeSvg(value, symbology = "CODE128", showText = true) {
+  return symbology === "EAN13"
+    ? ean13Svg(value, showText)
+    : code128Svg(value, showText);
+}
+
+export function barcodeModuleCount(value, symbology = "CODE128") {
+  if (symbology === "EAN13") return encodeEan13(value) ? 113 : 0;
+  const encoded = encodeCode128(value);
+  if (!encoded) return 0;
+  return (encoded.codes.length - 1) * 11 + 13 + 20;
+}
+
+export function recommendedBarcodeWidthMm(value, symbology = "CODE128") {
+  const modules = barcodeModuleCount(value, symbology);
+  // Two dots per narrow module on the common 203-DPI label printers.
+  return modules ? Math.ceil(modules * 0.25 * 2) / 2 : 0;
 }
 export function adaptiveLabelNameFont(value, configuredSize) {
   const length = String(value || "").trim().length;
@@ -181,10 +351,15 @@ export function buildBarcodeLabelsHtml(rows, profile = {}) {
     gap = Number(config.content_gap_mm ?? 1),
     padding = Number(config.label_padding_mm ?? 2),
     pricePosition = config.price_position || "TOP",
+    symbology = config.symbology || "CODE128",
     showBarcodeText = config.show_barcode_text !== false,
     barcodeHeight = Math.min(
       Number(config.barcode_height_mm || 13),
-      Math.max(6, height - 8),
+      Math.max(1, height - 8),
+    ),
+    barcodeWidth = Math.min(
+      Number(config.barcode_width_mm || width),
+      width,
     ),
     labels = rows
       .flatMap((row) =>
@@ -195,11 +370,11 @@ export function buildBarcodeLabelsHtml(rows, profile = {}) {
       )
       .map((row) => {
         const adaptiveFont = adaptiveLabelNameFont(row.designation, nameFont);
-        return `<article class="label">${config.show_product_name !== false ? `<div class="name" style="--name-font-size:${adaptiveFont}px">${esc(row.designation)}</div>` : ""}${config.show_price !== false && pricePosition === "TOP" ? `<div class="price">${Number(row.selling_price || 0).toFixed(2)} DA</div>` : ""}<div class="barcode">${code128Svg(row.barcode, showBarcodeText)}</div>${config.show_reference && row.reference ? `<div class="reference">Réf. ${esc(row.reference)}</div>` : ""}${config.show_price !== false && pricePosition === "BOTTOM" ? `<div class="price">${Number(row.selling_price || 0).toFixed(2)} DA</div>` : ""}</article>`;
+        return `<article class="label">${config.show_product_name !== false ? `<div class="name" style="--name-font-size:${adaptiveFont}px">${esc(row.designation)}</div>` : ""}${config.show_price !== false && pricePosition === "TOP" ? `<div class="price">${Number(row.selling_price || 0).toFixed(2)} DA</div>` : ""}<div class="barcode">${barcodeSvg(row.barcode, symbology, showBarcodeText)}</div>${config.show_reference && row.reference ? `<div class="reference">Réf. ${esc(row.reference)}</div>` : ""}${config.show_price !== false && pricePosition === "BOTTOM" ? `<div class="price">${Number(row.selling_price || 0).toFixed(2)} DA</div>` : ""}</article>`;
       })
       .join(""),
     previewCss = profile.preview
       ? "body{min-height:100vh;display:grid;place-items:center;background:#f3f4f6}.label{background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.18);page-break-after:auto;break-after:auto}"
       : "";
-  return `<!doctype html><html><head><meta charset="utf-8"><style>@page{size:${width}mm ${height}mm portrait;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:Arial;color:#000}.label{width:${width}mm;height:${height}mm;overflow:hidden;padding:${padding}mm;gap:${gap}mm;display:flex;flex-direction:column;align-items:center;justify-content:center;page-break-after:always;break-after:page}.label:last-child{page-break-after:auto;break-after:auto}.name{width:100%;max-height:2.3em;font-size:var(--name-font-size,${nameFont}px);font-weight:700;line-height:1.15;text-align:center;white-space:normal;overflow:hidden;overflow-wrap:anywhere;word-break:break-word}.price{font-size:${priceFont}px;font-weight:700}.barcode{width:100%;height:${barcodeHeight}mm}.barcode svg{width:100%;height:100%}.reference{font-size:${referenceFont}px}${previewCss}</style></head><body>${labels}</body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><style>@page{size:${width}mm ${height}mm portrait;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:Arial;color:#000}.label{width:${width}mm;height:${height}mm;overflow:hidden;padding:${padding}mm;gap:${gap}mm;display:flex;flex-direction:column;align-items:center;justify-content:center;page-break-after:always;break-after:page}.label:last-child{page-break-after:auto;break-after:auto}.name{width:100%;max-height:2.3em;font-size:var(--name-font-size,${nameFont}px);font-weight:700;line-height:1.15;text-align:center;white-space:normal;overflow:hidden;overflow-wrap:anywhere;word-break:break-word}.price{font-size:${priceFont}px;font-weight:700}.barcode{width:${barcodeWidth}mm;height:${barcodeHeight}mm;flex:none}.barcode svg{display:block;width:100%;height:100%}.reference{font-size:${referenceFont}px}${previewCss}</style></head><body>${labels}</body></html>`;
 }

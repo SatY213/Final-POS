@@ -278,6 +278,8 @@ const remove = db.transaction((id) => {
   for (const table of ["delivery_lines", "sales_return_lines"]) {
     db.prepare(`UPDATE ${table} SET product_id=NULL WHERE product_id=?`).run(id);
   }
+  if (db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='warranties'").get())
+    db.prepare("UPDATE warranties SET product_id=NULL,product_unit_id=NULL WHERE product_id=?").run(id);
 
   db.prepare("DELETE FROM sale_batch_allocations WHERE batch_id IN (SELECT id FROM stock_batches WHERE product_id=?)").run(id);
   db.prepare("DELETE FROM sale_serial_allocations WHERE serial_id IN (SELECT id FROM stock_serials WHERE product_id=?)").run(id);

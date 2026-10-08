@@ -58,6 +58,18 @@ try {
     db.prepare(
       "INSERT INTO product_stock(product_id,warehouse_id,quantity) VALUES(?,?,100)",
     ).run(product, warehouse);
+    db.prepare(
+      "INSERT INTO product_barcodes(product_id,product_unit_id,barcode,is_primary) VALUES(?,?,?,1)",
+    ).run(product, base, "400638133393");
+    const scannedEan = Pos.searchProducts("4006381333931", warehouse, actor);
+    assert.equal(scannedEan.filter((item) => item.exact_match).length, 1);
+    assert.equal(scannedEan[0].product_unit_id, base);
+    assert.equal(
+      Pos.searchProducts("4006381333932", warehouse, actor).some(
+        (item) => item.exact_match,
+      ),
+      false,
+    );
     Settings.updateGroup(
       "sales",
       {

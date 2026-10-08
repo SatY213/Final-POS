@@ -75,7 +75,7 @@ export default function Reports({ warehouseId, onNavigate }) {
   const o = data?.overview || {};
   return <div className="flex h-full min-h-0 flex-col bg-[#f5f7f5] p-4 lg:p-5">
     <ErrorMessage message={error} onClose={() => setError("")} />
-    <section className="mx-auto flex h-full min-h-0 w-full max-w-[1550px] flex-col border border-gray-300 bg-white shadow-sm">
+    <section className="flex h-full min-h-0 w-full flex-col border border-gray-300 bg-white shadow-sm">
       <header className="flex flex-wrap items-center gap-3 border-b px-5 py-4">
         <div className="flex h-10 w-10 items-center justify-center bg-purple-50 text-purple-700"><BarChart3 size={20}/></div>
         <div><h1 className="text-[18px] font-black">{t("reports")}</h1><p className="text-[11px] text-black/50">{t("reportsDescription")}</p></div>

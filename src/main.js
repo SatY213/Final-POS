@@ -8,6 +8,7 @@ app.setName("POS Modern");
 let apiProcess = null;
 let licensingService = null;
 let installationActivated = false;
+let mainWindow = null;
 const LOCAL_API_URL = "http://127.0.0.1:3000";
 const CONNECTION_FILE = "connection.json";
 
@@ -191,9 +192,13 @@ ipcMain.handle("activate-software", async (_event, code) => {
   return { ok: true };
 });
 import { buildSalePrintHtml } from "./utils/salePrintTemplate";
-import { buildBarcodeLabelsHtml } from "./utils/barcodeLabelTemplate";
+import {
+  buildBarcodeLabelsHtml,
+  isBarcodeValueValid,
+} from "./utils/barcodeLabelTemplate";
 import { buildCommercialPrintHtml } from "./utils/commercialPrintTemplate";
 import { buildBarcodePrintOptions } from "./utils/barcodePrintOptions";
+import { buildWarrantyPrintHtml } from "./utils/warrantyPrintTemplate";
 
 async function waitForPrintableContent(webContents) {
   await webContents.executeJavaScript(`(async () => {
@@ -325,6 +330,16 @@ ipcMain.handle("print-barcode-labels", async (_event, { rows, profile }) => {
   assertActivated();
   if (!Array.isArray(rows) || !rows.length)
     throw new Error("No barcode label selected");
+  const symbology = profile?.configuration?.symbology || "CODE128";
+  const invalidRow = rows.find(
+    (row) =>
+      Number(row?.quantity || 0) > 0 &&
+      !isBarcodeValueValid(row?.barcode, symbology),
+  );
+  if (invalidRow)
+    throw new Error(
+      `Invalid ${symbology} barcode for ${invalidRow.designation || "product"}`,
+    );
   const html = buildBarcodeLabelsHtml(rows, profile),
     window = new BrowserWindow({
       show: false,
@@ -399,6 +414,30 @@ ipcMain.handle("print-document", async (_event, { document, profile }) => {
   }
   return { printed: true };
 });
+ipcMain.handle("print-warranty", async (_event, { warranty, profile }) => {
+  assertActivated();
+  if (!warranty?.warranty_number) throw new Error("Warranty document is invalid");
+  const window = new BrowserWindow({ show: false, webPreferences: { sandbox: true } });
+  await window.loadURL(
+    `data:text/html;charset=utf-8,${encodeURIComponent(buildWarrantyPrintHtml(warranty, profile))}`,
+  );
+  try {
+    await new Promise((resolve, reject) =>
+      window.webContents.print(
+        {
+          silent: !!profile?.auto_print,
+          deviceName: profile?.system_name || undefined,
+          copies: Number(profile?.copies || 1),
+          printBackground: true,
+        },
+        (ok, reason) => ok ? resolve() : reject(new Error(reason || "Printing failed")),
+      ),
+    );
+  } finally {
+    window.destroy();
+  }
+  return { printed: true };
+});
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
@@ -408,7 +447,7 @@ const createWindow = (activated = installationActivated) => {
   const needsConnectionSetup = !readConnectionConfig();
   const initialWidth = !activated ? 620 : needsConnectionSetup ? 680 : 460;
   const initialHeight = !activated ? 680 : needsConnectionSetup ? 720 : 560;
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: initialWidth,
     height: initialHeight,
 
@@ -457,25 +496,41 @@ const createWindow = (activated = installationActivated) => {
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
   });
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+  return mainWindow;
 };
 
-app.whenReady().then(() => {
-  Menu.setApplicationMenu(null);
-  licensingService = createLicensingService({
-    userDataPath: app.getPath("userData"),
-    appVersion: app.getVersion(),
-  });
-  installationActivated = licensingService.validateLocalLicense().valid;
-  if (installationActivated && readConnectionConfig()?.mode === "local")
-    startPackagedApi();
-  createWindow(installationActivated);
+const hasSingleInstanceLock = !started && app.requestSingleInstanceLock();
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+if (!hasSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    const existingWindow = mainWindow || BrowserWindow.getAllWindows()[0];
+    if (!existingWindow || existingWindow.isDestroyed()) return;
+    if (existingWindow.isMinimized()) existingWindow.restore();
+    if (!existingWindow.isVisible()) existingWindow.show();
+    existingWindow.focus();
   });
-});
+
+  app.whenReady().then(() => {
+    Menu.setApplicationMenu(null);
+    licensingService = createLicensingService({
+      userDataPath: app.getPath("userData"),
+      appVersion: app.getVersion(),
+    });
+    installationActivated = licensingService.validateLocalLicense().valid;
+    if (installationActivated && readConnectionConfig()?.mode === "local")
+      startPackagedApi();
+    createWindow(installationActivated);
+
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+  });
+}
 
 app.on("before-quit", () => {
   stopPackagedApi();

@@ -1041,6 +1041,7 @@ require("./remove-purchases-tva");
 require("./purchases");
 require("./invoices");
 require("./transactions");
+require("./warranties");
 if (isFreshDatabase && process.env.POS_SKIP_INITIAL_ADMIN !== "1")
   require("../ensure-initial-admin").ensureInitialAdmin(db);
 if (

@@ -219,7 +219,7 @@ export default function Products({
   return (
     <div className="flex h-full flex-col bg-[#f5f7f5] text-black">
       <main className="min-h-0 flex-1 overflow-auto p-6">
-        <div className="mx-auto max-w-[1500px]">
+        <div className="w-full">
           {mode === "form" && (
             <ProductForm
               product={selected}

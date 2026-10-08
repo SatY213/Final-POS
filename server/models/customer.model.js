@@ -94,6 +94,7 @@ const usageDefinitions = [
   ["deliveries", "deliveries"],
   ["sales_returns", "sales returns"],
   ["invoices", "invoices"],
+  ["warranties", "warranties"],
   ["customer_account_entries", "customer account entries"],
 ];
 

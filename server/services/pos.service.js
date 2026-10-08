@@ -2,6 +2,7 @@ const db = require("../config/database");
 const Settings = require("./settings.service");
 const CustomerAccount = require("./customer-account.service");
 const SalePayment = require("./sale-payment.service");
+const { ean13BaseAlias } = require("../utils/search");
 
 class PosError extends Error {
   constructor(message, status = 400) {
@@ -121,20 +122,22 @@ function searchProducts(query, warehouseId, user) {
   authorizeWarehouse(warehouseId, user);
   const search = String(query || "").trim();
   if (!search) return [];
+  const eanBase = ean13BaseAlias(search);
   return db
     .prepare(
       `SELECT p.id product_id,p.designation,p.reference,p.track_stock,p.track_batches,p.track_expiration,p.track_serials,
     pu.id product_unit_id,pu.conversion_factor,pu.selling_price,u.name unit_name,u.symbol unit_symbol,p.min_stock,
-    pb.barcode,CASE WHEN pb.barcode=@exact THEN 1 ELSE 0 END exact_match,
+    pb.barcode,CASE WHEN pb.barcode=@exact OR pb.barcode=@eanBase THEN 1 ELSE 0 END exact_match,
     COALESCE(ps.quantity,0) stock_quantity,(SELECT MIN(sb.expiration_date) FROM stock_batches sb WHERE sb.product_id=p.id AND sb.warehouse_id=@warehouse AND sb.quantity>0) nearest_expiration
     FROM products p JOIN product_units pu ON pu.product_id=p.id AND pu.is_active=1 JOIN units u ON u.id=pu.unit_id
     LEFT JOIN product_barcodes pb ON pb.product_unit_id=pu.id
     LEFT JOIN product_stock ps ON ps.product_id=p.id AND ps.warehouse_id=@warehouse
-    WHERE p.is_active=1 AND (pb.barcode=@exact OR p.reference=@exact COLLATE NOCASE OR fuzzy_match(@search,p.designation,p.reference,pb.barcode,u.name)=1)
+    WHERE p.is_active=1 AND (pb.barcode=@exact OR pb.barcode=@eanBase OR p.reference=@exact COLLATE NOCASE OR fuzzy_match(@search,p.designation,p.reference,pb.barcode,u.name)=1)
     ORDER BY exact_match DESC,p.designation COLLATE NOCASE,pu.is_base DESC LIMIT 30`,
     )
     .all({
       exact: search,
+      eanBase,
       search,
       warehouse: Number(warehouseId),
     });

@@ -27,6 +27,17 @@ function tokenizeSearch(input) {
   return normalized ? normalized.split(" ") : [];
 }
 
+function ean13BaseAlias(value) {
+  const digits = String(value ?? "").replace(/\s+/g, "");
+  if (!/^\d{13}$/.test(digits)) return null;
+  const sum = [...digits.slice(0, 12)].reduce(
+    (total, digit, index) => total + Number(digit) * (index % 2 ? 3 : 1),
+    0,
+  );
+  const checkDigit = String((10 - (sum % 10)) % 10);
+  return checkDigit === digits[12] ? digits.slice(0, 12) : null;
+}
+
 function fuzzyMatch(input, ...values) {
   const searchedTokens = tokenizeSearch(input);
   if (!searchedTokens.length) return 1;
@@ -35,9 +46,14 @@ function fuzzyMatch(input, ...values) {
   );
   if (!searchable) return 0;
   const compact = searchable.replace(/\s+/g, "");
-  return searchedTokens.every(
-    (token) => searchable.includes(token) || compact.includes(token),
-  )
+  return searchedTokens.every((token) => {
+    const eanBase = ean13BaseAlias(token);
+    return (
+      searchable.includes(token) ||
+      compact.includes(token) ||
+      (eanBase && (searchable.includes(eanBase) || compact.includes(eanBase)))
+    );
+  })
     ? 1
     : 0;
 }
@@ -53,6 +69,7 @@ function registerSearchFunctions(db) {
 module.exports = {
   normalizeSearch,
   tokenizeSearch,
+  ean13BaseAlias,
   fuzzyMatch,
   registerSearchFunctions,
 };

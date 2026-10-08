@@ -19,6 +19,7 @@ import Purchases from "./pages/Purchases/Purchases";
 import PurchaseOrders from "./pages/Purchases/PurchaseOrders";
 import PointOfPurchase from "./pages/PointOfPurchase/PointOfPurchase";
 import Reports from "./pages/Reports/Reports";
+import Warranties from "./pages/Warranties/Warranties";
 import ConnectionSetup from "./pages/Setup/ConnectionSetup";
 import Activation from "./pages/Activation/Activation";
 
@@ -375,6 +376,8 @@ function App() {
       <Settings onNavigate={handleNavigate} />
     ) : currentPage === "reports" ? (
       <Reports warehouseId={activeWarehouseId} onNavigate={handleNavigate} />
+    ) : currentPage === "warranties" ? (
+      <Warranties warehouseId={activeWarehouseId} />
     ) : (
       <Dashboard
         cashSession={activeCashSession}

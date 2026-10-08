@@ -9,3 +9,14 @@ Mise a jour :
   ./UPDATE_API_SERVER_UBUNTU.sh
 
 Le dossier server doit rester a cote des deux scripts.
+
+
+// verify
+sudo systemctl is-enabled pos-modern-api
+sudo systemctl status pos-modern-api
+
+// useful commands
+sudo systemctl restart pos-modern-api
+sudo systemctl stop pos-modern-api
+sudo systemctl start pos-modern-api
+sudo journalctl -u pos-modern-api -f

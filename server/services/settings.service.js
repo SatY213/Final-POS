@@ -217,6 +217,7 @@ function saveProfile(type, data) {
       "PURCHASE_ORDER",
       "PURCHASE_RECEIPT",
       "PURCHASE_RETURN",
+      "WARRANTY",
       "BARCODE_LABEL",
     ].includes(type)
   )
@@ -238,6 +239,7 @@ function saveProfile(type, data) {
     PURCHASE_ORDER: ["A4", "A5", "THERMAL_80", "THERMAL_58"],
     PURCHASE_RECEIPT: ["A4", "A5", "THERMAL_80", "THERMAL_58"],
     PURCHASE_RETURN: ["A4", "A5", "THERMAL_80", "THERMAL_58"],
+    WARRANTY: ["A4", "A5"],
     BARCODE_LABEL: ["40x25mm", "50x30mm", "60x40mm", "CUSTOM"],
   };
   if (!formats[type].includes(data.paper_format))
@@ -284,6 +286,7 @@ function saveProfile(type, data) {
       PURCHASE_ORDER: [...commonKeys, "show_warehouse_name", "show_address", "show_phone", "show_email", "show_customer", "show_product_reference", "show_discounts"],
       PURCHASE_RECEIPT: [...commonKeys, "show_warehouse_name", "show_address", "show_phone", "show_email", "show_customer", "show_product_reference", "show_discounts"],
       PURCHASE_RETURN: [...commonKeys, "show_warehouse_name", "show_address", "show_phone", "show_email", "show_customer", "show_product_reference", "show_discounts"],
+      WARRANTY: [...commonKeys, "show_warehouse_name", "show_address", "show_phone", "show_email", "show_customer", "show_signature_area"],
       BARCODE_LABEL: [
         "show_product_name",
         "show_price",
@@ -294,6 +297,7 @@ function saveProfile(type, data) {
         "name_font_size",
         "price_font_size",
         "reference_font_size",
+        "barcode_width_mm",
         "barcode_height_mm",
         "price_position",
         "show_barcode_text",
@@ -341,7 +345,8 @@ function saveProfile(type, data) {
       name_font_size: [6, 30],
       price_font_size: [6, 36],
       reference_font_size: [6, 24],
-      barcode_height_mm: [6, 60],
+      barcode_width_mm: [5, 150],
+      barcode_height_mm: [1, 60],
       content_gap_mm: [0, 10],
       label_padding_mm: [0, 10],
     };
@@ -381,6 +386,7 @@ function saveProfile(type, data) {
               PURCHASE_ORDER: "DOCUMENT",
               PURCHASE_RECEIPT: "DOCUMENT",
               PURCHASE_RETURN: "DOCUMENT",
+              WARRANTY: "DOCUMENT",
               BARCODE_LABEL: "LABEL",
             }[type];
     if (!printer?.is_active)
@@ -412,6 +418,7 @@ const documentPrefixes = {
   PURCHASE_ORDER: "BC",
   PURCHASE_RECEIPT: "BR",
   SUPPLIER_RETURN: "RF",
+  WARRANTY: "GAR",
 };
 
 function formatDocumentNumber(documentType, sequence) {

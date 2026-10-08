@@ -58,7 +58,7 @@ export default function PurchaseOrders({ warehouseId, onNavigate }) {
   };
   return (
     <div className="flex h-full min-h-0 flex-col bg-[#f4f6f5] p-4 lg:p-5">
-      <section className="mx-auto flex h-full w-full max-w-[1550px] min-h-0 flex-col border border-gray-300 bg-white shadow-sm">
+      <section className="flex h-full min-h-0 w-full flex-col border border-gray-300 bg-white shadow-sm">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
           <div>
             <h1 className="text-[18px] font-black">{t("purchaseOrders")}</h1>

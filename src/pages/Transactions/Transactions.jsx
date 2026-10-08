@@ -48,7 +48,7 @@ export default function Transactions({ onNavigate, warehouseId, initialFilters =
 
   return (
     <div className="h-full overflow-auto bg-[#f5f7f5] p-6">
-      <section className="mx-auto max-w-[1500px] border border-gray-300 bg-white">
+      <section className="w-full border border-gray-300 bg-white">
         <header className="flex items-center gap-3 border-b p-5">
           <ReceiptText className="text-[#099323]" />
           <div>

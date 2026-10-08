@@ -152,7 +152,7 @@ export default function Settings() {
       />
 
       <main className="min-w-0 flex-1 overflow-auto">
-        <div className="mx-auto w-full max-w-[1500px] p-5 lg:p-6">
+        <div className="w-full p-5 lg:p-6">
           <div className="mb-4 flex items-end justify-between border-b border-gray-300 pb-3">
             <div>
               <h1 className="text-[18px] font-bold tracking-tight text-black">

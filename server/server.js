@@ -26,6 +26,7 @@ const transactionsRoutes = require("./routes/transactions.routes");
 const purchasesRoutes = require("./routes/purchases.routes");
 const analyticsRoutes = require("./routes/analytics.routes");
 const dataExchangeRoutes = require("./routes/data-exchange.routes");
+const warrantiesRoutes = require("./routes/warranties.routes");
 
 require("./database/migrations/init");
 
@@ -62,6 +63,7 @@ app.use("/api/transactions", transactionsRoutes);
 app.use("/api/purchases", purchasesRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/data-exchange", dataExchangeRoutes);
+app.use("/api/warranties", warrantiesRoutes);
 
 app.get("/", (req, res) => {
   res.json({

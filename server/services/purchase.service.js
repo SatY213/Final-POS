@@ -97,7 +97,9 @@ function context(query, user) {
   const products = db
     .prepare(
       `SELECT p.id,p.designation,p.reference,p.track_batches,p.track_expiration,p.track_serials,pu.id product_unit_id,pu.purchase_price,pu.conversion_factor,u.name unit_name,
-      (SELECT group_concat(pb.barcode,' ') FROM product_barcodes pb WHERE pb.product_unit_id=pu.id) barcodes
+      (SELECT group_concat(pb.barcode,' ') FROM product_barcodes pb WHERE pb.product_unit_id=pu.id) barcodes,
+      (SELECT group_concat(pb.barcode,char(31)) FROM product_barcodes pb WHERE pb.product_unit_id=pu.id) exact_barcodes,
+      (SELECT pb.barcode FROM product_barcodes pb WHERE pb.product_unit_id=pu.id ORDER BY pb.is_primary DESC,pb.id LIMIT 1) barcode
     FROM products p JOIN product_units pu ON pu.product_id=p.id AND pu.is_active=1 JOIN units u ON u.id=pu.unit_id WHERE p.is_active=1 ORDER BY p.designation,pu.is_base DESC`,
     )
     .all();

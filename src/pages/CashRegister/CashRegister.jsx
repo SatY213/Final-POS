@@ -701,7 +701,7 @@ function SessionDetail({ data, cash, date, t, onBack }) {
 function Page({ children }) {
   return (
     <div className="h-full overflow-auto bg-[#f5f7f5] p-6">
-      <div className="mx-auto max-w-[1500px]">{children}</div>
+      <div className="w-full">{children}</div>
     </div>
   );
 }

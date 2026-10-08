@@ -187,6 +187,7 @@ async function resetBusinessData(confirmation, user, token) {
     );
   const safety = await create(user, "before-data-reset");
   const tables = [
+    "warranties",
     "invoice_credit_note_lines",
     "invoice_credit_notes",
     "invoice_payment_allocations",

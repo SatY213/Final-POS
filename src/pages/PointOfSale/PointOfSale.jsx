@@ -114,7 +114,8 @@ export default function PointOfSale({
   initialEditSale,
 }) {
   const { language, t } = useLanguage(),
-    searchRef = useRef(null);
+    searchRef = useRef(null),
+    searchRequestId = useRef(0);
   const [context, setContext] = useState(null),
     [query, setQuery] = useState(""),
     [results, setResults] = useState([]),
@@ -467,6 +468,7 @@ export default function PointOfSale({
   }
   async function addProduct(item) {
     if (saleLinesLocked) return;
+    searchRequestId.current += 1;
     if (!item.track_serials || mode !== "SALE") {
       if (item.track_batches && mode === "SALE") {
         setQuery("");
@@ -522,37 +524,42 @@ export default function PointOfSale({
   }
   async function doSearch(value) {
     setQuery(value);
+    const requestId = ++searchRequestId.current;
     if (!value.trim()) {
       setResults([]);
       return;
     }
     try {
       const found = await searchPosProducts(value, warehouseId);
-      if (
-        settings.scan_add_immediately &&
-        found.length &&
-        found[0].exact_match &&
-        found.filter((x) => x.exact_match).length === 1
-      )
-        addProduct(found[0]);
-      else {
-        setResults(found);
-        setHighlight(-1);
-      }
+      if (requestId !== searchRequestId.current) return;
+      setResults(found);
+      setHighlight(-1);
     } catch (e) {
       setError(e.message);
     }
   }
-  async function handleSearchEnter() {
-    if (!query.trim()) return;
-    const current = results[highlight] || results[0];
-    if (current) {
-      addProduct(current);
+  async function handleSearchEnter(rawValue = query) {
+    const search = String(rawValue || "").trim();
+    if (!search) return;
+    if (highlight >= 0 && results[highlight]) {
+      addProduct(results[highlight]);
       return;
     }
     try {
-      const found = await searchPosProducts(query.trim(), warehouseId);
-      if (found[0]) addProduct(found[0]);
+      const found = await searchPosProducts(search, warehouseId);
+      const exactMatches = found.filter((item) => item.exact_match);
+      if (
+        exactMatches.length === 1 &&
+        settings.scan_add_immediately !== false
+      ) {
+        searchRequestId.current += 1;
+        addProduct(exactMatches[0]);
+      } else {
+        setResults(found);
+        setHighlight(
+          exactMatches.length === 1 ? found.indexOf(exactMatches[0]) : -1,
+        );
+      }
     } catch (e) {
       setError(e.message);
     }
@@ -1013,10 +1020,10 @@ export default function PointOfSale({
               e.preventDefault();
               setHighlight((i) => Math.max(0, i - 1));
             }
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
               e.preventDefault();
               e.stopPropagation();
-              handleSearchEnter();
+              handleSearchEnter(e.currentTarget.value);
             }
             if (e.key === "Escape") {
               setResults([]);

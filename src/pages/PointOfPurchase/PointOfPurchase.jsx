@@ -7,7 +7,7 @@ import { inputClass } from "../../components/ui/FormField";
 import { formatMoney } from "../../utils/formatters";
 import { getSettings } from "../../api/settings.model";
 import { useLanguage } from "../../i18n/LanguageContext";
-import { fuzzyIncludes } from "../../utils/search";
+import { barcodeMatches, fuzzyIncludes } from "../../utils/search";
 import { PurchaseArticleEditor } from "./PurchaseDialogs";
 import { printPurchaseDirect } from "../Purchases/PurchasePrintDialog";
 import CartTable from "../PointOfSale/CartTable";
@@ -112,6 +112,15 @@ export default function PointOfPurchase({ warehouseId, initialOrder, initialEdit
     }
     commitProduct(product);
   }
+  function handleSearchEnter(value) {
+    const exactMatches = context.products.filter((product) =>
+      barcodeMatches(
+        value,
+        String(product.exact_barcodes || "").split("\u001f"),
+      ),
+    );
+    if (exactMatches.length === 1) addProduct(exactMatches[0]);
+  }
   function patchLine(index, values) { setLines((current) => current.map((line, i) => i === index ? { ...line, ...values } : line)); }
   function reset() { setLines([]); setSupplier(null); setQuery(""); setDocumentDate(today()); setPrintFormat(context.purchaseSettings?.default_print_format || "NONE"); setSuccess(null); setError(""); receiptRequestId.current = uid("purchase-receipt"); paymentRequestId.current = uid("purchase-payment"); }
   function startSave() {
@@ -207,7 +216,7 @@ export default function PointOfPurchase({ warehouseId, initialOrder, initialEdit
   return <div className="flex h-full min-h-0 flex-col bg-[#f5f7f5] p-3 text-black">
     <ErrorMessage message={error} onClose={() => setError("")}/>
     <div className="relative flex h-11 shrink-0 border border-gray-400 bg-white">
-      <Search className="m-3" size={18}/><input ref={searchRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Scanner ou rechercher un article à acheter")} className="min-w-0 flex-1 text-[14px] font-medium outline-none"/>
+      <Search className="m-3" size={18}/><input ref={searchRef} value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); handleSearchEnter(e.currentTarget.value); } }} placeholder={t("Scanner ou rechercher un article à acheter")} className="min-w-0 flex-1 text-[14px] font-medium outline-none"/>
       {results.length > 0 && <div className="absolute left-0 right-0 top-[44px] z-30 max-h-[260px] overflow-auto border border-gray-400 bg-white shadow-lg">{results.map((product) => <button key={product.product_unit_id} onClick={() => addProduct(product)} className="flex h-12 w-full items-center justify-between border-b px-4 text-left text-[12px] hover:bg-green-50"><span><b>{product.designation}</b><small className="ml-2">{product.unit_name} {product.barcode}</small></span><b>{formatMoney(product.purchase_price, language)}</b></button>)}</div>}
     </div>
     <div className="my-2 flex shrink-0 gap-2 overflow-visible">
